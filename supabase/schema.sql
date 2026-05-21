@@ -8,6 +8,7 @@ create table if not exists profiles (
   id              uuid primary key references auth.users(id) on delete cascade,
   username        text unique not null,
   display_name    text not null,
+  email           text,
   phone           text,
   avatar_seed     text not null default 'default',
   avatar_color    text not null default 'mint',
