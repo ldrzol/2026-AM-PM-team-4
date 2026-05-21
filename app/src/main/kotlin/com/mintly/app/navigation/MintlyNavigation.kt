@@ -169,7 +169,12 @@ fun MainScaffold(onLogout: () -> Unit) {
         ) {
             composable(MainTab.Shop.route)     { ShopScreen() }
             composable(MainTab.Ranking.route)  { RankingScreen() }
-            composable(MainTab.Home.route)     { HomeScreen() }
+            composable(MainTab.Home.route)     {
+                HomeScreen(
+                    onNavigateToBudget  = { tabNav.navigate(MainTab.Budget.route) { launchSingleTop = true } },
+                    onNavigateToRanking = { tabNav.navigate(MainTab.Ranking.route) { launchSingleTop = true } },
+                )
+            }
             composable(MainTab.Budget.route)   { BudgetScreen() }
             composable(MainTab.Settings.route) { SettingsScreen(onLogout = onLogout) }
         }

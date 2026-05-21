@@ -79,15 +79,15 @@ private fun DrawScope.drawBlobCharacter(
     hat: String?,
 ) {
     val cx      = 60f
-    val cy      = 74f
-    val rx      = 46f
-    val ry      = 48f
-    val bodyTop = cy - ry   // ≈ 26
+    val cy      = 72f
+    val rx      = 44f
+    val ry      = 44f
+    val bodyTop = cy - ry   // = 28
 
     // ── 그림자 ────────────────────────────────────────────────
     drawOval(
         color   = Color(0x1A000000),
-        topLeft = Offset(cx - 26f, 140f),
+        topLeft = Offset(cx - 26f, 132f),
         size    = Size(52f, 8f),
     )
 
@@ -96,15 +96,15 @@ private fun DrawScope.drawBlobCharacter(
         brush  = Brush.radialGradient(
             colors = listOf(pal.body.copy(alpha = 0.20f), Color.Transparent),
             center = Offset(cx, cy),
-            radius = 68f,
+            radius = 74f,
         ),
-        radius = 68f,
+        radius = 74f,
         center = Offset(cx, cy),
     )
 
     // ── 귀 (바디 뒤쪽에) ─────────────────────────────────────
-    drawCircle(pal.body, radius = 14f, center = Offset(cx - rx + 4f, cy - ry + 14f))
-    drawCircle(pal.body, radius = 14f, center = Offset(cx + rx - 4f, cy - ry + 14f))
+    drawCircle(pal.body, radius = 12f, center = Offset(cx - rx + 6f, cy - ry + 12f))
+    drawCircle(pal.body, radius = 12f, center = Offset(cx + rx - 6f, cy - ry + 12f))
 
     // ── 메인 바디 ─────────────────────────────────────────────
     drawOval(

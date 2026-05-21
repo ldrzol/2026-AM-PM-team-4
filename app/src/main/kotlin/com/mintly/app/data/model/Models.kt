@@ -21,6 +21,8 @@ data class Profile(
     @SerialName("forced_until")    val forcedUntil: String? = null,
     @SerialName("has_crown_until") val hasCrownUntil: String? = null,
     @SerialName("share_mode")      val shareMode: String = "percent",
+    @SerialName("check_streak")    val checkStreak: Int = 0,
+    @SerialName("last_checkin")    val lastCheckin: String? = null,
     @SerialName("created_at")      val createdAt: String? = null,
 )
 
@@ -162,14 +164,14 @@ data class RouletteSegment(
 )
 
 val DEFAULT_ROULETTE_SEGMENTS = listOf(
-    RouletteSegment("r1", "코인 30",  "🪙", 0xFF3B82F6, "coins",   "30"),
-    RouletteSegment("r2", "코인 100", "🪙", 0xFF10B981, "coins",   "100"),
-    RouletteSegment("r3", "코인 50",  "🪙", 0xFFF59E0B, "coins",   "50"),
-    RouletteSegment("r4", "코인 10",  "🪙", 0xFFEC4899, "coins",   "10"),
-    RouletteSegment("r5", "코인 200", "💰", 0xFF8B5CF6, "coins",   "200"),
-    RouletteSegment("r6", "코인 500", "🏆", 0xFFEF4444, "coins",   "500"),
-    RouletteSegment("r7", "코인 20",  "🪙", 0xFF06B6D4, "coins",   "20"),
-    RouletteSegment("r8", "꽝",      "💨", 0xFF94A3B8, "nothing", "0"),
+    RouletteSegment("r1", "코인 30",  "🪙", 0xFFBDD7F5, "coins",   "30"),
+    RouletteSegment("r2", "코인 100", "🪙", 0xFFAEE9D0, "coins",   "100"),
+    RouletteSegment("r3", "코인 50",  "🪙", 0xFFFFE4A0, "coins",   "50"),
+    RouletteSegment("r4", "코인 10",  "🪙", 0xFFFFB3CE, "coins",   "10"),
+    RouletteSegment("r5", "코인 200", "💰", 0xFFD4C5F9, "coins",   "200"),
+    RouletteSegment("r6", "코인 500", "🏆", 0xFFFFB5A7, "coins",   "500"),
+    RouletteSegment("r7", "코인 20",  "🪙", 0xFFB3E8F5, "coins",   "20"),
+    RouletteSegment("r8", "꽝",       "💨", 0xFFDDE3EA, "nothing", "0"),
 )
 
 val DEFAULT_COSTUMES = listOf(
@@ -179,8 +181,8 @@ val DEFAULT_COSTUMES = listOf(
     Costume("hat_cat",         "hat", "고양이 귀",   350, "rare",      "🐱"),
     Costume("hat_star",        "hat", "별 핀",       180, "common",    "⭐"),
     Costume("hat_flower_clip", "hat", "꽃 핀",       220, "rare",      "🌸"),
-    Costume("hat_side_ribbon", "hat", "사이드 리본", 280, "rare",      "🎗️"),
-    Costume("hat_cap",         "hat", "캡 모자",     200, "common",    "🧢"),
+    Costume("hat_side_ribbon", "hat", "사이드 리본", 280, "rare",      "🎗️", isShop = false),
+    Costume("hat_cap",         "hat", "캡 모자",     200, "common",    "🧢", isShop = false),
     Costume("hat_bunny",       "hat", "토끼 귀",     300, "rare",      "🐰"),
     Costume("hat_flower",      "hat", "꽃 화관",     450, "epic",      "💐"),
     Costume("hat_beanie",      "hat", "비니",        250, "common",    "🧶"),

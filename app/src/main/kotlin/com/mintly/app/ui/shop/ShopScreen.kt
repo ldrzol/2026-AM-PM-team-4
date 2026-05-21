@@ -70,27 +70,23 @@ fun ShopScreen(vm: ShopViewModel = hiltViewModel()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .clip(ShapePill)
-                .background(거지방Colors.Gray100)
-                .padding(4.dp),
+                .padding(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            listOf("roulette" to "🎰 룰렛", "store" to "🛍️ 코스튬 상점").forEach { (id, label) ->
+            listOf("roulette" to "🎲 룰렛", "store" to "🛍️ 코스튬 상점").forEach { (id, label) ->
                 val active = tab == id
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(ShapePill)
-                        .background(if (active) Color.White else Color.Transparent)
-                        .clickable { tab = id }
-                        .padding(vertical = 10.dp),
-                    contentAlignment = Alignment.Center,
+                Surface(
+                    shape    = ShapePill,
+                    color    = if (active) Color.White else Color.Transparent,
+                    border   = if (active) BorderStroke(1.5.dp, 거지방Colors.Mint400) else null,
+                    modifier = Modifier.clickable { tab = id },
                 ) {
                     Text(
                         label,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style      = MaterialTheme.typography.bodyLarge,
                         fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
-                        color = if (active) 거지방Colors.Mint700 else 거지방Colors.Gray500,
+                        color      = if (active) 거지방Colors.Mint600 else 거지방Colors.Gray400,
+                        modifier   = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                     )
                 }
             }
@@ -142,10 +138,24 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(28.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+
+        // ── 룰렛 카드 ────────────────────────────────────────
+        Surface(
+            shape  = Shape20,
+            color  = Color.White,
+            border = BorderStroke(1.dp, 거지방Colors.Gray200),
+            shadowElevation = 2.dp,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(16.dp),
+        ) {
 
         // ── 룰렛 휠 ─────────────────────────────────────────
         Box(
@@ -242,25 +252,53 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
             shape = ShapePill,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
+                .height(52.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = 거지방Colors.Mint400,
                 disabledContainerColor = 거지방Colors.Gray200,
             ),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
         ) {
             if (state.isSpinning) {
-                CircularProgressIndicator(modifier = Modifier.size(22.dp), color = Color.White, strokeWidth = 2.5.dp)
-                Spacer(Modifier.width(10.dp))
-                Text("돌리는 중...", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.5.dp)
+                Spacer(Modifier.width(8.dp))
+                Text("돌리는 중...", fontWeight = FontWeight.Bold, fontSize = 15.sp)
             } else {
-                Icon(Icons.Rounded.Casino, null, modifier = Modifier.size(22.dp))
-                Spacer(Modifier.width(10.dp))
+                Icon(Icons.Rounded.Casino, null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
                 Text(
-                    if (state.ticketCount > 0) "룰렛 돌리기  ·  티켓 1장" else "티켓이 없습니다",
+                    if (state.ticketCount > 0) "룰렛 돌리기  ·  티켓 ${state.ticketCount}장" else "티켓이 없습니다",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
+                    fontSize = 15.sp,
                 )
+            }
+        }
+
+        } // Column 닫기
+        } // Surface 닫기
+
+        // ── 룰렛권 얻는 법 ───────────────────────────────────
+        Surface(
+            shape  = Shape20,
+            color  = 거지방Colors.Gray50,
+            border = BorderStroke(1.dp, 거지방Colors.Gray200),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    "룰렛권 얻는 법",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = 거지방Colors.Gray600,
+                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Rounded.EmojiEvents, null, tint = 거지방Colors.Mint500, modifier = Modifier.size(16.dp))
+                    Text("그룹에서 1등 하면 2장 지급", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray700)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Rounded.ShoppingCart, null, tint = 거지방Colors.Mint500, modifier = Modifier.size(16.dp))
+                    Text("상점에서 코인 500개로 구매 가능", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray700)
+                }
             }
         }
 
