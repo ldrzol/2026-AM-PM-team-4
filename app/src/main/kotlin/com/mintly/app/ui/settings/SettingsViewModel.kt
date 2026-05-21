@@ -167,6 +167,15 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun changeEmail(newEmail: String) {
+        viewModelScope.launch {
+            authRepo.changeEmail(newEmail).fold(
+                onSuccess = { _uiState.value = _uiState.value.copy(successMsg = "이메일 변경 링크를 새 이메일로 발송했습니다") },
+                onFailure = { _uiState.value = _uiState.value.copy(error = "변경 실패: ${it.message}") }
+            )
+        }
+    }
+
     // ── 기타 ──────────────────────────────────────────────
 
     fun signOut(onDone: () -> Unit) {

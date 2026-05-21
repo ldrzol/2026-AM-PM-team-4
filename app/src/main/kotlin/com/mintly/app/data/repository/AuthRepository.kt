@@ -57,4 +57,8 @@ class AuthRepository @Inject constructor(
     suspend fun changePassword(newPassword: String): Result<Unit> = runCatching {
         client.auth.updateUser { password = newPassword }
     }
+
+    suspend fun changeEmail(newEmail: String): Result<Unit> = runCatching {
+        client.auth.updateUser { email = newEmail }
+    }
 }

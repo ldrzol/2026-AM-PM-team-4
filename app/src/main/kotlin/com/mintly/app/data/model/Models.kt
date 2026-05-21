@@ -161,13 +161,13 @@ data class RouletteSegment(
 )
 
 val DEFAULT_ROULETTE_SEGMENTS = listOf(
-    RouletteSegment("r1", "모자",     "🎩", 0xFF74BBAE, "hat",     "cap"),
+    RouletteSegment("r1", "코인 30",  "🪙", 0xFF74BBAE, "coins",   "30"),
     RouletteSegment("r2", "코인 100", "🪙", 0xFFE8B547, "coins",   "100"),
-    RouletteSegment("r3", "꽃",      "🌸", 0xFFE5896B, "hat",     "flower"),
-    RouletteSegment("r4", "코인 50",  "🪙", 0xFFFFD93D, "coins",   "50"),
-    RouletteSegment("r5", "비니",    "🧢", 0xFF6BA3D6, "hat",     "beanie"),
-    RouletteSegment("r6", "코인 200", "💰", 0xFF9C7DD9, "coins",   "200"),
-    RouletteSegment("r7", "토끼",    "🐰", 0xFFFFA3B8, "hat",     "bunny"),
+    RouletteSegment("r3", "코인 50",  "🪙", 0xFFE5896B, "coins",   "50"),
+    RouletteSegment("r4", "코인 10",  "🪙", 0xFFFFD93D, "coins",   "10"),
+    RouletteSegment("r5", "코인 200", "💰", 0xFF6BA3D6, "coins",   "200"),
+    RouletteSegment("r6", "코인 500", "🏆", 0xFF9C7DD9, "coins",   "500"),
+    RouletteSegment("r7", "코인 20",  "🪙", 0xFFFFA3B8, "coins",   "20"),
     RouletteSegment("r8", "꽝",      "💨", 0xFFA8AFB5, "nothing", "0"),
 )
 

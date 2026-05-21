@@ -116,11 +116,9 @@ class RankingRepository @Inject constructor(
             MemberSpend(profile, spent, income)
         }
 
-        // 한 명도 입력하지 않았으면 빈 화면 유지
-        if (spendList.none { it.spent > 0 || it.income > 0 }) return emptyList()
-
-        val active   = spendList.filter { it.spent > 0 || it.income > 0 }
-        val inactive = spendList.filter { it.spent == 0 && it.income == 0 }
+        // 수입·지출 모두 입력한 멤버만 순위에 포함, 나머지는 미입력으로 표시
+        val active   = spendList.filter { it.spent > 0 && it.income > 0 }
+        val inactive = spendList.filter { it.spent == 0 || it.income == 0 }
 
         // 수입 대비 지출 % 오름차순 (수입 없으면 절대 지출액 기준)
         val sortedActive = active.sortedWith(

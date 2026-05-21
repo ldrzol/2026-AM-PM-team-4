@@ -300,6 +300,7 @@ fun SettingsScreen(
     if (showPersonalInfo) {
         PersonalInfoSheet(
             onChangePassword = { vm.changePassword(it) },
+            onChangeEmail    = { vm.changeEmail(it) },
             onDismiss = { showPersonalInfo = false },
         )
     }
@@ -464,10 +465,12 @@ private fun SettingsRow(
 @Composable
 private fun PersonalInfoSheet(
     onChangePassword: (String) -> Unit,
+    onChangeEmail: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var showChangePw by remember { mutableStateOf(false) }
+    var showChangePw    by remember { mutableStateOf(false) }
+    var showChangeEmail by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -518,24 +521,26 @@ private fun PersonalInfoSheet(
 
             HorizontalDivider(modifier = Modifier.padding(start = 84.dp), color = 거지방Colors.Gray100, thickness = 0.5.dp)
 
-            // 이메일 변경 (준비 중)
+            // 이메일 변경
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clickable { showChangeEmail = true }
                     .padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier.size(48.dp).clip(CircleShape).background(거지방Colors.Gray100),
+                    modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFFE8F0FE)),
                 ) {
-                    Icon(Icons.Rounded.Email, null, tint = 거지방Colors.Gray500, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Rounded.Email, null, tint = Color(0xFF3F6BB3), modifier = Modifier.size(24.dp))
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("이메일 변경", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = 거지방Colors.Gray400)
-                    Text("준비 중입니다", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray300)
+                    Text("이메일 변경", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = 거지방Colors.Gray900)
+                    Text("계정 이메일을 변경합니다", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400)
                 }
+                Icon(Icons.Rounded.ChevronRight, null, tint = 거지방Colors.Gray300, modifier = Modifier.size(20.dp))
             }
         }
     }
@@ -545,6 +550,84 @@ private fun PersonalInfoSheet(
             onSave    = { onChangePassword(it); showChangePw = false },
             onDismiss = { showChangePw = false },
         )
+    }
+    if (showChangeEmail) {
+        ChangeEmailDialog(
+            onSave    = { onChangeEmail(it); showChangeEmail = false },
+            onDismiss = { showChangeEmail = false },
+        )
+    }
+}
+
+@Composable
+private fun ChangeEmailDialog(onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    var newEmail    by remember { mutableStateOf("") }
+    var confirmEmail by remember { mutableStateOf("") }
+    val match       = newEmail.isNotBlank() && newEmail == confirmEmail
+    val validFormat = newEmail.contains("@") && newEmail.contains(".")
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(shape = Shape20, color = Color.White, shadowElevation = 8.dp) {
+            Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(0xFFE8F0FE)),
+                    ) { Icon(Icons.Rounded.Email, null, tint = Color(0xFF3F6BB3), modifier = Modifier.size(20.dp)) }
+                    Text("이메일 변경", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                }
+                Text(
+                    "새 이메일로 인증 링크가 발송됩니다.\n링크를 클릭하면 이메일이 변경됩니다.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = 거지방Colors.Gray500,
+                )
+                OutlinedTextField(
+                    value = newEmail,
+                    onValueChange = { newEmail = it },
+                    label = { Text("새 이메일") },
+                    singleLine = true,
+                    shape = Shape10,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = 거지방Colors.Mint400,
+                        unfocusedBorderColor = 거지방Colors.Gray200,
+                    ),
+                )
+                OutlinedTextField(
+                    value = confirmEmail,
+                    onValueChange = { confirmEmail = it },
+                    label = { Text("이메일 확인") },
+                    singleLine = true,
+                    shape = Shape10,
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = confirmEmail.isNotBlank() && newEmail != confirmEmail,
+                    supportingText = {
+                        if (confirmEmail.isNotBlank() && newEmail != confirmEmail) {
+                            Text("이메일이 일치하지 않습니다", color = 거지방Colors.Danger)
+                        }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = 거지방Colors.Mint400,
+                        unfocusedBorderColor = 거지방Colors.Gray200,
+                    ),
+                )
+                if (newEmail.isNotBlank() && !validFormat) {
+                    Text("올바른 이메일 형식을 입력해주세요", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Warning)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(
+                        onClick = onDismiss, modifier = Modifier.weight(1f), shape = ShapePill,
+                        border = BorderStroke(1.dp, 거지방Colors.Gray200),
+                    ) { Text("취소", color = 거지방Colors.Gray600) }
+                    Button(
+                        onClick = { if (match && validFormat) onSave(newEmail) },
+                        enabled = match && validFormat,
+                        modifier = Modifier.weight(1f), shape = ShapePill,
+                        colors = ButtonDefaults.buttonColors(containerColor = 거지방Colors.Mint400),
+                    ) { Text("변경") }
+                }
+            }
+        }
     }
 }
 

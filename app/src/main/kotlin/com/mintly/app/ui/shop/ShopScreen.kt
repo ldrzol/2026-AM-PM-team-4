@@ -31,7 +31,6 @@ import com.mintly.app.ui.theme.거지방Colors
 import com.mintly.app.ui.theme.Shape14
 import com.mintly.app.ui.theme.Shape20
 import com.mintly.app.ui.theme.ShapePill
-import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -131,10 +130,10 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
     LaunchedEffect(state.isSpinning) {
         if (state.isSpinning) {
             rotation.animateTo(
-                targetValue = rotation.value + 360f * 5 + (0..360).random().toFloat(),
+                targetValue = rotation.value + 360f * 6 + (0..360).random().toFloat(),
                 animationSpec = tween(
-                    durationMillis = 3000,
-                    easing = CubicBezierEasing(0.15f, 0.85f, 0.25f, 1f),
+                    durationMillis = 3500,
+                    easing = CubicBezierEasing(0.05f, 0.9f, 0.1f, 1f),
                 ),
             )
         }
@@ -146,16 +145,39 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(28.dp),
     ) {
-        // 룰렛 휠 그리기
+
+        // ── 룰렛 휠 ─────────────────────────────────────────
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.size(260.dp),
+            modifier = Modifier.size(300.dp),
         ) {
+            // 외부 그림자 링
+            Canvas(modifier = Modifier.size(300.dp)) {
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color(0x2000C896), Color(0x0000C896)),
+                        radius = size.minDimension / 2f,
+                    ),
+                    radius = size.minDimension / 2f,
+                )
+            }
+
+            // 베젤 링 (Toss 느낌의 두꺼운 테두리)
+            Canvas(modifier = Modifier.size(284.dp)) {
+                drawCircle(
+                    brush = Brush.linearGradient(
+                        colors = listOf(Color(0xFFE0E0E0), Color(0xFFF8F8F8), Color(0xFFD0D0D0)),
+                    ),
+                    radius = size.minDimension / 2f,
+                )
+            }
+
+            // 휠 본체
             Canvas(
                 modifier = Modifier
-                    .size(240.dp)
+                    .size(260.dp)
                     .rotate(rotation.value),
             ) {
                 val segments = DEFAULT_ROULETTE_SEGMENTS
@@ -165,89 +187,182 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
 
                 segments.forEachIndexed { i, seg ->
                     val startAngle = i * sweepAngle - 90f
-                    // 조각 그리기
+                    val baseColor = Color(seg.color)
+                    // 각 슬라이스: 밝은 쪽 → 어두운 쪽 방사형 그라디언트 (입체감)
+                    val lightColor = baseColor.copy(
+                        red   = (baseColor.red   * 1.15f).coerceAtMost(1f),
+                        green = (baseColor.green * 1.15f).coerceAtMost(1f),
+                        blue  = (baseColor.blue  * 1.15f).coerceAtMost(1f),
+                    )
+                    val darkColor = baseColor.copy(
+                        red   = (baseColor.red   * 0.82f),
+                        green = (baseColor.green * 0.82f),
+                        blue  = (baseColor.blue  * 0.82f),
+                    )
                     drawArc(
-                        color = Color(seg.color),
+                        brush = Brush.radialGradient(
+                            colors = listOf(lightColor, darkColor),
+                            center = center,
+                            radius = radius,
+                        ),
                         startAngle = startAngle,
                         sweepAngle = sweepAngle,
                         useCenter = true,
                     )
-                    // 테두리
+                    // 슬라이스 간 흰 선
                     drawArc(
                         color = Color.White,
                         startAngle = startAngle,
                         sweepAngle = sweepAngle,
                         useCenter = true,
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3f),
                     )
                 }
-                // 중앙 원
-                drawCircle(color = Color.White, radius = radius * 0.15f, center = center)
+
+                // 중앙 허브 (입체 느낌)
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color.White, Color(0xFFE0E0E0)),
+                        center = center,
+                        radius = radius * 0.18f,
+                    ),
+                    radius = radius * 0.18f,
+                    center = center,
+                )
+                drawCircle(
+                    color = Color(0xFFCCCCCC),
+                    radius = radius * 0.18f,
+                    center = center,
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f),
+                )
             }
 
-            // 세그먼트 이모지/텍스트 오버레이
+            // 세그먼트 레이블 오버레이
             val segments = DEFAULT_ROULETTE_SEGMENTS
             val sweepAngle = 360f / segments.size
             segments.forEachIndexed { i, seg ->
-                val angle = Math.toRadians((i * sweepAngle + sweepAngle / 2 - 90 + rotation.value).toDouble())
-                val r = 80f
+                val angleDeg = i * sweepAngle + sweepAngle / 2 - 90 + rotation.value
+                val angleRad = Math.toRadians(angleDeg.toDouble())
+                val r = 82f
                 Box(
                     modifier = Modifier
-                        .size(260.dp)
+                        .size(300.dp)
                         .offset(
-                            x = (cos(angle) * r).dp,
-                            y = (sin(angle) * r).dp,
+                            x = (cos(angleRad) * r).dp,
+                            y = (sin(angleRad) * r).dp,
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(seg.emoji, fontSize = 18.sp)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(seg.emoji, fontSize = 16.sp)
+                        Text(
+                            seg.label,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
             }
 
-            // 포인터 (위쪽 삼각형)
-            Text(
-                "▼",
-                fontSize = 28.sp,
-                color = 거지방Colors.Mint400,
+            // 포인터 (세련된 삼각형 + 그림자)
+            Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .offset(y = (-12).dp),
-            )
+                    .offset(y = (-4).dp),
+            ) {
+                Canvas(modifier = Modifier.size(width = 24.dp, height = 32.dp)) {
+                    val path = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(size.width / 2f, size.height)
+                        lineTo(0f, 0f)
+                        lineTo(size.width, 0f)
+                        close()
+                    }
+                    // 그림자
+                    drawPath(path, color = Color(0x40000000), style = androidx.compose.ui.graphics.drawscope.Fill)
+                    drawPath(
+                        path,
+                        brush = Brush.linearGradient(
+                            colors = listOf(Color(0xFF00D49B), Color(0xFF00A87A)),
+                        ),
+                    )
+                }
+            }
         }
 
-        // 스핀 버튼
+        // ── 스핀 버튼 ────────────────────────────────────────
         Button(
             onClick = onSpin,
             enabled = !state.isSpinning && state.ticketCount > 0,
             shape = ShapePill,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
+                .height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = 거지방Colors.Mint400,
                 disabledContainerColor = 거지방Colors.Gray200,
             ),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
         ) {
             if (state.isSpinning) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                CircularProgressIndicator(modifier = Modifier.size(22.dp), color = Color.White, strokeWidth = 2.5.dp)
+                Spacer(Modifier.width(10.dp))
+                Text("돌리는 중...", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             } else {
-                Icon(Icons.Rounded.Casino, null)
-                Spacer(Modifier.width(8.dp))
+                Icon(Icons.Rounded.Casino, null, modifier = Modifier.size(22.dp))
+                Spacer(Modifier.width(10.dp))
                 Text(
-                    if (state.ticketCount > 0) "룰렛 돌리기 (티켓 1장)" else "티켓이 없습니다",
+                    if (state.ticketCount > 0) "룰렛 돌리기  ·  티켓 1장" else "티켓이 없습니다",
                     fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
                 )
             }
         }
 
-        // 보상 목록
-        Surface(shape = Shape20, color = 거지방Colors.Gray50, border = BorderStroke(1.dp, 거지방Colors.Gray200)) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("보상 목록", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray500)
-                DEFAULT_ROULETTE_SEGMENTS.forEach { seg ->
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(seg.emoji, fontSize = 18.sp)
-                        Text(seg.label, style = MaterialTheme.typography.bodyLarge)
+        // ── 보상 목록 (그리드 스타일) ────────────────────────
+        Surface(
+            shape = Shape20,
+            color = 거지방Colors.Gray50,
+            border = BorderStroke(1.dp, 거지방Colors.Gray200),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    "보상 목록",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = 거지방Colors.Gray600,
+                )
+                DEFAULT_ROULETTE_SEGMENTS.chunked(2).forEach { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        row.forEach { seg ->
+                            Surface(
+                                modifier = Modifier.weight(1f),
+                                shape = Shape14,
+                                color = Color(seg.color).copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, Color(seg.color).copy(alpha = 0.3f)),
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    Text(seg.emoji, fontSize = 18.sp)
+                                    Text(
+                                        seg.label,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = 거지방Colors.Gray800,
+                                    )
+                                }
+                            }
+                        }
+                        // 홀수 개일 때 빈 칸 채우기
+                        if (row.size == 1) Spacer(Modifier.weight(1f))
                     }
                 }
             }

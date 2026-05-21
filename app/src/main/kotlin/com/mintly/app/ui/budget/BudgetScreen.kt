@@ -249,7 +249,7 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
         }
 
         // ─── FAB ─────────────────────────────────────────────
-        FloatingActionButton(
+        LargeFloatingActionButton(
             onClick = { showAddSheet = true },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -259,7 +259,7 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
             contentColor   = Color.White,
             elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
         ) {
-            Icon(Icons.Rounded.Add, contentDescription = "거래 추가", modifier = Modifier.size(28.dp))
+            Icon(Icons.Rounded.Add, contentDescription = "거래 추가", modifier = Modifier.size(36.dp))
         }
 
         // ─── 스낵바 ───────────────────────────────────────────
