@@ -72,9 +72,11 @@ class GroupRepository @Inject constructor(
     suspend fun joinGroup(inviteCode: String): Result<FriendGroup> = runCatching {
         val uid = client.auth.currentUserOrNull()?.id ?: error("Not logged in")
         // SECURITY DEFINER RPC 사용 → 아직 멤버가 아닌 경우에도 invite_code로 조회 가능
+        // setof 반환 → 배열로 오므로 decodeList + firstOrNull 사용
         val group = client.postgrest
             .rpc("find_group_by_invite_code", buildJsonObject { put("p_code", inviteCode.uppercase()) })
-            .decodeSingleOrNull<FriendGroup>() ?: error("방을 찾을 수 없습니다")
+            .decodeList<FriendGroup>()
+            .firstOrNull() ?: error("방을 찾을 수 없습니다")
         client.from("group_members").insert(
             mapOf("group_id" to group.id, "user_id" to uid)
         )
