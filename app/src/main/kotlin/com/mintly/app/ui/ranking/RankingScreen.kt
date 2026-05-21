@@ -188,7 +188,7 @@ fun RankingScreen(vm: RankingViewModel = hiltViewModel()) {
                 val inactiveRankings = state.rankings.filter {  it.isNotEntered }
                 LazyColumn(
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 20.dp, top = 8.dp, bottom = 96.dp),
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     // 입력한 멤버 (순위 있음)
