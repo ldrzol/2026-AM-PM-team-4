@@ -22,12 +22,12 @@ import kotlin.math.sin
 
 // ─── 아바타 얼굴 설정 ─────────────────────────────────────
 data class AvatarFace(
-    val frontHair: String  = "fh3",
-    val backHair:  String  = "bh5",
-    val eye:       String  = "e1",
-    val eyebrow:   String  = "b15",
-    val nose:      String  = "n1",
-    val mouth:     String  = "m2",
+    val frontHair: String  = "fh_basic",
+    val backHair:  String  = "bh_basic",
+    val eye:       String  = "basic",
+    val eyebrow:   String  = "basic",
+    val nose:      String  = "n_basic",
+    val mouth:     String  = "basic_smile",
     val glasses:   String? = null,   // null = 안경 없음
 )
 
@@ -49,12 +49,21 @@ private val HAIR_COLOR = Color(0xFF663C13)
 private val BROW_COLOR = Color(0xFF341C06)
 private val FEATURE    = Color(0xFF1F2A28)
 
+// ─── 기본형.svg 변환 상수 (SVG 102×187 → Canvas 120×150) ──
+// SVG 얼굴 중심 (51,60) → Canvas 얼굴 중심 (hCx=60, hCy=48)
+private const val BASIC_SCALE = 0.75f
+private const val BASIC_TX    = 21.75f   // 60 - 51 * 0.75
+private const val BASIC_TY    = 3.0f     // 48 - 60 * 0.75
+
 // ─── SVG 경로 파서 헬퍼 ───────────────────────────────────
 private fun parsePath(d: String): Path = PathParser().parsePathString(d).toPath()
 
-// ─── 앞머리 경로 (100×100 캔버스) ─────────────────────────
+// ─── 앞머리 경로 (100×100 캔버스 또는 102×187 SVG 좌표계) ─
 private val FRONT_HAIR_PATHS: Map<String, Path> by lazy {
     mapOf(
+        // ── 기본형.svg 앞머리 (102×187 SVG 좌표계, BASIC_SCALE 적용) ──
+        "fh_basic" to parsePath("M50.8402 0C-5.90934 0-2.82193 49.3333 5.81547 74L8.49649 73.3971L12.1645 49.0831L17.8823 57.1877L25.3262 39.5736L33.3096 52.8653L42.0481 36.0076L50.5709 52.8653L58.77 34.3866L69.0189 52.8653L76.247 39.5736L83.5831 57.8361L89.0851 49.9476L92.4318 74H94.7623C103.767 49.3333 107.59 0 50.8402 0Z"),
+        // ── 기존 앞머리 (100×100 좌표계, hairScale 적용) ──
         "fh3"  to parsePath("M 100 96 L 90.7 96 C 92.1 75.3 86 33.9 50.6 33.9 C 15.2 33.9 8.3 73.9 9.3 93.9 L 0 93.9 C 0 30.6 20.4 8.9 30.7 6 C 29.2 13.9 32 16.4 33.6 16.7 C 34.6 13.5 39.5 6.1 41.8 0 C 45.2 4.4 49.2 9.6 50.6 11.6 C 52.3 6.7 56 1.8 57.7 0 C 58.8 0.7 64.4 9.6 67.0 13.9 C 68.1 9.9 71 5.9 72.3 4.3 C 94.7 33.9 100 76 100 96 Z"),
         "fh5"  to parsePath("M 14 86 L 0 86 L 9 47 L 2 47 C 5 35 17 17 23 11 L 17 11 C 20 7 30 0 51 1 C 71 2 81 9 84 13 L 78 13 C 87 24 95 42 98 50 L 91 50 C 94 56 99 76 101 86 L 82 86 L 80 58 L 77 73 L 63 37 L 36 67 L 36 47 L 32 47 L 14 86 Z"),
         "fh9"  to parsePath("M 50 0 C 88 0 95 50 80 95 L 73 47 L 60 28 C 55 33 35 49 30 53 C 29 50 34 38 39 31 L 25 50 L 18 95 C 1 50 12 0 50 0 Z"),
@@ -67,6 +76,9 @@ private val FRONT_HAIR_PATHS: Map<String, Path> by lazy {
 // ─── 뒷머리 경로 ───────────────────────────────────────────
 private val BACK_HAIR_PATHS: Map<String, Path> by lazy {
     mapOf(
+        // ── 기본형.svg 뒷머리 (102×187 SVG 좌표계, BASIC_SCALE 적용) ──
+        "bh_basic" to parsePath("M7.91598 57.7331V49.116L90.624 48L94.8027 49.116C96.0707 64.0525 99.4616 68.6483 100.999 69.0791C101.143 73.244 90.624 77.409 90.624 79.7069V85.3081C88.895 96.9126 84.14 103.069 81.9786 104.697L77.2237 96.654C76.9931 99.6413 69.827 105.463 66.2728 108C65.4659 105.472 61.2296 101.968 59.2124 100.532C57.0222 102.945 53.1126 106.516 51.4315 108C50.3941 108 45.0435 103.021 42.4979 100.532C41.3452 100.876 38.2713 105.654 36.8784 108C34.3424 106.851 27.6566 98.7126 24.6307 94.787C24.1697 96.8551 21.3647 102.255 20.0199 104.697C17.0228 102.744 13.1996 94.4997 11.6626 90.622L14.2563 82.1484C7.41029 78.507 1 69.0791 1 69.0791C4.99211 65.3808 6.75785 63.0392 7.91598 57.7331Z"),
+        // ── 기존 뒷머리 (100×100 좌표계, hairScale 적용) ──
         "bh5"  to parsePath("M 5 95 L 0 29 L 48 0 L 100 29 L 91 95 L 76 78 L 48 100 L 19 78 L 5 95 Z"),
         "bh9"  to Path().apply {
             addPath(parsePath("M 33 25 C 33 5 13 0 2 0 L 0 27 L 21 64 C 25 60 33 45 33 25 Z"))
@@ -77,9 +89,23 @@ private val BACK_HAIR_PATHS: Map<String, Path> by lazy {
     )
 }
 
+// ─── 기본형 눈 경로 (102×187 SVG 좌표계) ──────────────────
+private val BASIC_EYE_PATHS: Map<String, Path> by lazy {
+    mapOf(
+        // 오른쪽 눈: 눈구멍 원 + 위 눈꺼풀 아치
+        "right" to parsePath("M69.163 57.0474C71.6482 57.0475 73.663 59.0621 73.663 61.5474C73.6628 64.0324 71.6481 66.0473 69.163 66.0474C66.6778 66.0474 64.6632 64.0325 64.663 61.5474C64.663 59.0621 66.6777 57.0474 69.163 57.0474ZM66.2558 53.1157C70.9984 52.2209 76.4574 53.6006 81.7987 59.1821L78.8886 61.9673C74.3596 57.2346 70.2317 56.4646 67.0028 57.0737C63.6153 57.713 60.8292 59.9467 59.3339 61.8276L57.7567 60.5747L56.1796 59.3208C58.1005 56.9043 61.6723 53.9807 66.2558 53.1157Z"),
+        // 왼쪽 눈: 눈구멍 원 + 위 눈꺼풀 아치
+        "left"  to parsePath("M31.837 57.0474C29.3518 57.0475 27.337 59.0621 27.337 61.5474C27.3372 64.0324 29.3519 66.0473 31.837 66.0474C34.3222 66.0474 36.3368 64.0325 36.337 61.5474C36.337 59.0621 34.3223 57.0474 31.837 57.0474ZM34.7442 53.1157C30.0016 52.2209 24.5426 53.6006 19.2013 59.1821L22.1114 61.9673C26.6404 57.2346 30.7683 56.4646 33.9972 57.0737C37.3847 57.713 40.1708 59.9467 41.6661 61.8276L43.2433 60.5747L44.8204 59.3208C42.8995 56.9043 39.3277 53.9807 34.7442 53.1157Z"),
+    )
+}
+
 // ─── 눈썹 경로 ─────────────────────────────────────────────
 private val EYEBROW_PATHS: Map<String, Path> by lazy {
     mapOf(
+        // ── 기본형.svg 눈썹 (102×187 SVG 좌표계) ──
+        "basic_right" to parsePath("M56.5659 50.5909L54.8605 47.5841C70.8686 38.3696 82.3832 41.471 86.1394 44.1735L85.1522 45.071C77.936 39.6858 63.0879 46.5071 56.5659 50.5909Z"),
+        "basic_left"  to parsePath("M45.4341 50.5909L47.1395 47.5841C31.1314 38.3696 19.6168 41.471 15.8606 44.1735L16.8478 45.071C24.064 39.6858 38.9121 46.5071 45.4341 50.5909Z"),
+        // ── 기존 눈썹 ──
         "b1"  to Path().apply {
             addPath(parsePath("M 0 8 L 0 6 L 15 0 L 17 4 L 0 8 Z"))
             addPath(parsePath("M 38 8 L 38 6 L 23 0 L 21 4 L 38 8 Z"))
@@ -97,6 +123,9 @@ private val EYEBROW_PATHS: Map<String, Path> by lazy {
 // ─── 코 경로 ───────────────────────────────────────────────
 private val NOSE_PATHS: Map<String, Path> by lazy {
     mapOf(
+        // ── 기본형.svg 코 (102×187 SVG 좌표계) ──
+        "n_basic" to parsePath("M52.7627 66.271C52.782 68.3198 52.3359 69.9599 51.8389 71.1655C51.5912 71.7663 51.333 72.255 51.1202 72.6245C51.0146 72.8078 50.9195 72.9622 50.8487 73.0776C50.812 73.1374 50.7856 73.1809 50.7637 73.2173C50.7464 73.2462 50.7381 73.2601 50.7364 73.2632C50.2019 74.265 48.9473 75.1675 49.2666 77.5093C49.3187 77.8899 49.6322 78.3258 50.5655 78.7104C51.463 79.0803 52.5584 79.2272 53.2764 79.2368L53.2549 80.7915L53.2344 82.3462C52.2459 82.333 50.7391 82.145 49.3809 81.5854C48.0589 81.0407 46.4614 79.9508 46.1856 77.9292C45.9312 76.063 46.3595 74.5801 46.8975 73.4985C47.1622 72.9665 47.4492 72.5402 47.6739 72.228C47.7761 72.086 47.8913 71.9316 47.9454 71.8579C48.0281 71.7453 48.0188 71.7505 47.9922 71.8003C48.3388 71.1504 49.6818 69.4316 49.6524 66.3003L51.2081 66.2856L52.7627 66.271Z"),
+        // ── 기존 코 ──
         "n1" to parsePath("M 4 0 C 4 1.5 3.7 2.7 3.4 3.6 C 3 4.6 2 5.2 2 7 C 2 8 3 8.5 4.5 8.7 L 4.5 11 C 2.5 10.9 0 10.2 0 7.6 C 0 6.5 0.3 5.6 0.7 4.8 C 1.4 3.5 2 2.3 2 0 Z"),
         "n3" to Path(), // 두 콧구멍 - 원으로 처리
     )
@@ -105,6 +134,9 @@ private val NOSE_PATHS: Map<String, Path> by lazy {
 // ─── 입 경로 ───────────────────────────────────────────────
 private val MOUTH_PATHS: Map<String, Path> by lazy {
     mapOf(
+        // ── 기본형.svg 입 (이빨 미소, 102×187 SVG 좌표계) ──
+        "basic_smile" to parsePath("M40.8042 88C40.8156 88.0127 40.9502 88.1761 41.3218 88.4268C41.7047 88.685 42.283 88.9964 43.0981 89.2969C44.7279 89.8976 47.2672 90.4395 50.9829 90.4395C54.732 90.4394 57.2874 89.9882 58.9272 89.46C59.747 89.1958 60.3149 88.9196 60.6821 88.6885C61.0727 88.4426 61.154 88.3005 61.1255 88.3477L62.563 89.2178L64.0005 90.0869C63.6559 90.6567 63.0993 91.1374 62.4722 91.5322C61.82 91.9427 60.9849 92.3272 59.9575 92.6582C57.9023 93.3203 54.983 93.7998 50.9829 93.7998C46.9489 93.7998 44.0055 93.2125 41.937 92.4502C39.942 91.7149 38.594 90.7511 37.9995 89.8496L40.8042 88Z"),
+        // ── 기존 입 ──
         "m2"  to parsePath("M -6 0 C -5 1 -3 2 0 2 C 3 2 5 1 6 0 L 7 2 C 5 3 3 4 0 4 C -3 4 -5 3 -7 2 Z"),
         "m17" to parsePath("M -8 0 L -7 2 L -2 1 L -1 2 L 1 2 L 2 1 L 7 2 L 8 0"),
         "m22" to parsePath("M -7 0 C -3 0 4 0 7 -2"),
@@ -155,12 +187,19 @@ private fun DrawScope.drawAvatarContent(
     // 그림자
     drawOval(Color(0x1E142E2A), topLeft = Offset(hCx - 26, 141f), size = Size(52f, 6f))
 
-    // 뒷머리
+    // 뒷머리 (기본형 경로는 BASIC_SCALE, 기존 경로는 hairScale 적용)
     BACK_HAIR_PATHS[face.backHair]?.let { path ->
-        withTransform({
-            translate(hairTx, hairTy)
-            scale(hairScale, hairScale, pivot = Offset.Zero)
-        }) { drawPath(path, HAIR_COLOR) }
+        if (face.backHair == "bh_basic") {
+            withTransform({
+                translate(BASIC_TX, BASIC_TY)
+                scale(BASIC_SCALE, BASIC_SCALE, pivot = Offset.Zero)
+            }) { drawPath(path, HAIR_COLOR) }
+        } else {
+            withTransform({
+                translate(hairTx, hairTy)
+                scale(hairScale, hairScale, pivot = Offset.Zero)
+            }) { drawPath(path, HAIR_COLOR) }
+        }
     }
 
     // 몸통
@@ -267,12 +306,19 @@ private fun DrawScope.drawAvatarContent(
     )
     drawOval(brush = skinBrush, topLeft = Offset(hCx - hRx, hCy - hRy), size = Size(hRx * 2, hRy * 2))
 
-    // 앞머리
+    // 앞머리 (기본형 경로는 BASIC_SCALE, 기존 경로는 hairScale 적용)
     FRONT_HAIR_PATHS[face.frontHair]?.let { path ->
-        withTransform({
-            translate(hairTx, hairTy)
-            scale(hairScale, hairScale, pivot = Offset.Zero)
-        }) { drawPath(path, HAIR_COLOR) }
+        if (face.frontHair == "fh_basic") {
+            withTransform({
+                translate(BASIC_TX, BASIC_TY)
+                scale(BASIC_SCALE, BASIC_SCALE, pivot = Offset.Zero)
+            }) { drawPath(path, HAIR_COLOR) }
+        } else {
+            withTransform({
+                translate(hairTx, hairTy)
+                scale(hairScale, hairScale, pivot = Offset.Zero)
+            }) { drawPath(path, HAIR_COLOR) }
+        }
     }
 
     // 눈썹
@@ -296,6 +342,17 @@ private fun DrawScope.drawAvatarContent(
 
 private fun DrawScope.drawEyebrow(style: String, x: Float, y: Float) {
     when (style) {
+        // ── 기본형.svg 눈썹 ──────────────────────────────────
+        "basic" -> {
+            withTransform({
+                translate(BASIC_TX, BASIC_TY)
+                scale(BASIC_SCALE, BASIC_SCALE, pivot = Offset.Zero)
+            }) {
+                EYEBROW_PATHS["basic_right"]?.let { drawPath(it, BROW_COLOR) }
+                EYEBROW_PATHS["basic_left"]?.let  { drawPath(it, BROW_COLOR) }
+            }
+        }
+        // ── 기존 눈썹 ────────────────────────────────────────
         "b1" -> {
             val p = Path().apply {
                 moveTo(x, y + 8); lineTo(x, y + 6); lineTo(x + 15, y); lineTo(x + 17, y + 4); close()
@@ -327,6 +384,23 @@ private fun DrawScope.drawEyebrow(style: String, x: Float, y: Float) {
 
 private fun DrawScope.drawEyes(style: String, x: Float, y: Float) {
     when (style) {
+        // ── 기본형.svg 눈 (눈구멍 윤곽 + 눈꺼풀 아치 + 동공) ──
+        "basic" -> {
+            withTransform({
+                translate(BASIC_TX, BASIC_TY)
+                scale(BASIC_SCALE, BASIC_SCALE, pivot = Offset.Zero)
+            }) {
+                // 오른쪽 눈 윤곽 + 아치
+                BASIC_EYE_PATHS["right"]?.let { drawPath(it, FEATURE) }
+                // 오른쪽 동공 (r=5.63518)
+                drawCircle(FEATURE, radius = 5.63518f, center = Offset(69.0498f, 61.1293f))
+                // 왼쪽 눈 윤곽 + 아치
+                BASIC_EYE_PATHS["left"]?.let  { drawPath(it, FEATURE) }
+                // 왼쪽 동공 (matrix(-1 0 0 1 37.5854 55.4941) 변환)
+                drawCircle(FEATURE, radius = 5.63518f, center = Offset(31.95f, 61.129f))
+            }
+        }
+        // ── 기존 눈 ─────────────────────────────────────────
         "e1" -> {
             // 기본 눈 (원 + 눈꺼풀)
             drawCircle(FEATURE, radius = 3.5f, center = Offset(x + 8, y + 8.5f))
@@ -371,6 +445,16 @@ private fun DrawScope.drawEyes(style: String, x: Float, y: Float) {
 
 private fun DrawScope.drawNose(style: String, x: Float, y: Float) {
     when (style) {
+        // ── 기본형.svg 코 ────────────────────────────────────
+        "n_basic" -> {
+            withTransform({
+                translate(BASIC_TX, BASIC_TY)
+                scale(BASIC_SCALE, BASIC_SCALE, pivot = Offset.Zero)
+            }) {
+                NOSE_PATHS["n_basic"]?.let { drawPath(it, FEATURE) }
+            }
+        }
+        // ── 기존 코 ─────────────────────────────────────────
         "n1" -> {
             NOSE_PATHS["n1"]?.let { path ->
                 withTransform({ translate(x, y) }) { drawPath(path, FEATURE) }
@@ -394,6 +478,16 @@ private fun DrawScope.drawNose(style: String, x: Float, y: Float) {
 
 private fun DrawScope.drawMouth(style: String, x: Float, y: Float) {
     when (style) {
+        // ── 기본형.svg 입 (이빨 미소) ─────────────────────────
+        "basic_smile" -> {
+            withTransform({
+                translate(BASIC_TX, BASIC_TY)
+                scale(BASIC_SCALE, BASIC_SCALE, pivot = Offset.Zero)
+            }) {
+                MOUTH_PATHS["basic_smile"]?.let { drawPath(it, FEATURE) }
+            }
+        }
+        // ── 기존 입 ─────────────────────────────────────────
         "m2" -> MOUTH_PATHS["m2"]?.let { p -> withTransform({ translate(x, y) }) { drawPath(p, FEATURE) } }
         "m17" -> {
             val p = Path().apply {

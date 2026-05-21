@@ -636,15 +636,18 @@ private fun AvatarSelectorRow(
 
 
 // ─── 확장 함수 ────────────────────────────────────────────
-fun Map<String, String>.toAvatarFace() = AvatarFace(
-    frontHair = this["frontHair"] ?: "fh3",
-    backHair  = this["backHair"]  ?: "bh5",
-    eye       = this["eye"]       ?: "e1",
-    eyebrow   = this["eyebrow"]   ?: "b15",
-    nose      = this["nose"]      ?: "n1",
-    mouth     = this["mouth"]     ?: "m2",
-    glasses   = this["glasses"],
-)
+fun Map<String, String>.toAvatarFace(): AvatarFace {
+    val def = AvatarFace()  // 기본값은 AvatarFace 정의에서 가져옴
+    return AvatarFace(
+        frontHair = this["frontHair"] ?: def.frontHair,
+        backHair  = this["backHair"]  ?: def.backHair,
+        eye       = this["eye"]       ?: def.eye,
+        eyebrow   = this["eyebrow"]   ?: def.eyebrow,
+        nose      = this["nose"]      ?: def.nose,
+        mouth     = this["mouth"]     ?: def.mouth,
+        glasses   = this["glasses"],
+    )
+}
 
 fun AvatarFace.toMap(): Map<String, String> = buildMap {
     put("frontHair", frontHair)

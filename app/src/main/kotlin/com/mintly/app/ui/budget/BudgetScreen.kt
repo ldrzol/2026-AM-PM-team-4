@@ -110,13 +110,13 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
                         // 즐겨찾기 빠른 추가 버튼
                         IconButton(
                             onClick = { showFavSheet = true },
-                            modifier = Modifier.align(Alignment.CenterEnd).size(44.dp),
+                            modifier = Modifier.align(Alignment.CenterEnd).size(52.dp),
                         ) {
                             Icon(
                                 Icons.Rounded.Star,
                                 contentDescription = "즐겨찾기 빠른 추가",
                                 tint = if (state.favorites.isEmpty()) 거지방Colors.Gray300 else 거지방Colors.Coin,
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(32.dp),
                             )
                         }
                     }
@@ -198,7 +198,7 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
 
                     Text(
                         listTitle,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = 거지방Colors.Gray800,
                     )
@@ -213,14 +213,14 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
                             ) {
                                 Text(
                                     "전체 보기",
-                                    style = MaterialTheme.typography.labelSmall,
+                                    style = MaterialTheme.typography.bodyLarge,
                                     color = 거지방Colors.Mint500,
                                 )
                             }
                         }
                         Text(
                             "${filteredTxByDate.values.sumOf { it.size }}건",
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.bodyLarge,
                             color = 거지방Colors.Gray400,
                         )
                     }
@@ -315,12 +315,12 @@ private fun MonthlySummaryCol(
     ) {
         Text(
             label,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = 거지방Colors.Gray400,
         )
         Text(
             text,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = if (bold) FontWeight.ExtraBold else FontWeight.Bold,
             color = color,
         )
@@ -353,7 +353,7 @@ private fun BudgetCalendar(
                 Text(
                     dow,
                     modifier   = Modifier.weight(1f),
-                    style      = MaterialTheme.typography.labelMedium,
+                    style      = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = when (idx) {
                         0    -> Color(0xFFE57373)
@@ -375,7 +375,7 @@ private fun BudgetCalendar(
                 repeat(7) { col ->
                     val cellIdx = rowIdx * 7 + col
                     if (cellIdx < firstDay || day > daysInMonth) {
-                        Box(modifier = Modifier.weight(1f).height(72.dp))
+                        Box(modifier = Modifier.weight(1f).height(96.dp))
                     } else {
                         val currentDay = day
                         val date    = LocalDate.of(year, month, currentDay)
@@ -436,22 +436,22 @@ private fun CalendarDayCell(
 
     Column(
         modifier = modifier
-            .height(72.dp)
+            .height(96.dp)
             .clickable(onClick = onClick)
-            .padding(horizontal = 2.dp, vertical = 6.dp),
+            .padding(horizontal = 2.dp, vertical = 5.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // 날짜 숫자
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(28.dp)
+                .size(40.dp)
                 .clip(CircleShape)
                 .background(circleBg),
         ) {
             Text(
                 "$day",
-                fontSize   = 13.sp,
+                fontSize   = 20.sp,
                 color      = dayNumColor,
                 fontWeight = if (highlight) FontWeight.Bold else FontWeight.Normal,
             )
@@ -463,26 +463,26 @@ private fun CalendarDayCell(
         if (income > 0) {
             Text(
                 text      = "+${calendarAmtFmt(income)}",
-                fontSize  = 9.sp,
+                fontSize  = 13.sp,
                 color     = 거지방Colors.Income,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
-                lineHeight = 11.sp,
+                lineHeight = 15.sp,
                 maxLines  = 1,
             )
         } else {
-            Spacer(Modifier.height(11.dp))
+            Spacer(Modifier.height(15.dp))
         }
 
         // 지출 (주황/빨강)
         if (expense > 0) {
             Text(
                 text      = "-${calendarAmtFmt(expense)}",
-                fontSize  = 9.sp,
+                fontSize  = 13.sp,
                 color     = 거지방Colors.Expense,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
-                lineHeight = 11.sp,
+                lineHeight = 15.sp,
                 maxLines  = 1,
             )
         }
@@ -523,16 +523,16 @@ private fun QuickFavoritesSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column {
-                    Text("즐겨찾기 빠른 추가", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("즐겨찾기 빠른 추가", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     val dow = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.KOREAN)
                     Text(
                         "${date.monthValue}월 ${date.dayOfMonth}일 ($dow)",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = 거지방Colors.Gray400,
                     )
                 }
                 TextButton(onClick = onOpenFull) {
-                    Text("직접 입력", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Mint500)
+                    Text("직접 입력", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Mint500)
                 }
             }
             HorizontalDivider(color = 거지방Colors.Gray100)
@@ -558,7 +558,7 @@ private fun QuickFavoritesSheet(
                             .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = if (active) FontWeight.Bold else FontWeight.Normal, color = if (active) aColor else 거지방Colors.Gray500)
+                        Text(label, style = MaterialTheme.typography.bodyLarge, fontWeight = if (active) FontWeight.Bold else FontWeight.Normal, color = if (active) aColor else 거지방Colors.Gray500)
                     }
                 }
             }
@@ -575,9 +575,9 @@ private fun QuickFavoritesSheet(
                         verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         Text("⭐", fontSize = 28.sp)
-                        Text("즐겨찾기가 없습니다", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400)
+                        Text("즐겨찾기가 없습니다", style = MaterialTheme.typography.bodyLarge, color = 거지방Colors.Gray400)
                         TextButton(onClick = onOpenFull) {
-                            Text("직접 추가하기", color = 거지방Colors.Mint500, style = MaterialTheme.typography.labelMedium)
+                            Text("직접 추가하기", color = 거지방Colors.Mint500, style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }
@@ -612,14 +612,14 @@ private fun QuickFavoritesSheet(
                             val accentColor = if (fav.kind == "expense") 거지방Colors.Expense else 거지방Colors.Income
                             Box(
                                 contentAlignment = Alignment.Center,
-                                modifier = Modifier.size(44.dp).clip(Shape14).background(accentColor.copy(alpha = 0.1f)),
+                                modifier = Modifier.size(52.dp).clip(Shape14).background(accentColor.copy(alpha = 0.1f)),
                             ) {
-                                Text(getCategoryEmoji(fav.category?.icon ?: ""), fontSize = 20.sp)
+                                Text(getCategoryEmoji(fav.category?.icon ?: ""), fontSize = 24.sp)
                             }
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     fav.category?.name ?: "미분류",
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.SemiBold,
                                     color = 거지방Colors.Gray900,
                                 )
@@ -627,21 +627,21 @@ private fun QuickFavoritesSheet(
                                     fav.amount?.let { append("%,d원".format(it)) }
                                     fav.memo?.takeIf { it.isNotBlank() }?.let { if (isNotEmpty()) append(" · "); append(it) }
                                 }
-                                if (detail.isNotBlank()) Text(detail, style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400)
-                                if (!hasAmount) Text("금액 미설정 — 직접 입력 필요", style = MaterialTheme.typography.labelSmall, color = 거지방Colors.Warning)
+                                if (detail.isNotBlank()) Text(detail, style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray400)
+                                if (!hasAmount) Text("금액 미설정 — 직접 입력 필요", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Warning)
                             }
                             if (hasAmount) {
                                 Surface(shape = ShapePill, color = accentColor.copy(alpha = 0.1f)) {
                                     Text(
                                         if (fav.kind == "expense") "-${"%,d".format(fav.amount!!)}원" else "+${"%,d".format(fav.amount!!)}원",
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                        style = MaterialTheme.typography.labelMedium,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                        style = MaterialTheme.typography.bodyMedium,
                                         color = accentColor,
                                         fontWeight = FontWeight.Bold,
                                     )
                                 }
                             } else {
-                                Icon(Icons.Rounded.Edit, null, tint = 거지방Colors.Gray300, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Rounded.Edit, null, tint = 거지방Colors.Gray300, modifier = Modifier.size(22.dp))
                             }
                         }
                         HorizontalDivider(modifier = Modifier.padding(start = 76.dp), color = 거지방Colors.Gray100, thickness = 0.5.dp)
@@ -686,13 +686,13 @@ private fun DateHeader(date: String, txList: List<Transaction>) {
     ) {
         Text(
             fmt,
-            style      = MaterialTheme.typography.bodySmall,
+            style      = MaterialTheme.typography.titleMedium,
             color      = 거지방Colors.Gray600,
             fontWeight = FontWeight.SemiBold,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            if (income  > 0) Text("+%,d원".format(income),  style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Income,  fontWeight = FontWeight.SemiBold)
-            if (expense > 0) Text("-%,d원".format(expense), style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Expense, fontWeight = FontWeight.SemiBold)
+            if (income  > 0) Text("+%,d원".format(income),  style = MaterialTheme.typography.titleMedium, color = 거지방Colors.Income,  fontWeight = FontWeight.SemiBold)
+            if (expense > 0) Text("-%,d원".format(expense), style = MaterialTheme.typography.titleMedium, color = 거지방Colors.Expense, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -710,7 +710,7 @@ private fun TransactionRow(tx: Transaction, onDelete: () -> Unit) {
         color = Color.White,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
@@ -718,24 +718,24 @@ private fun TransactionRow(tx: Transaction, onDelete: () -> Unit) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(52.dp)
                     .clip(Shape14)
                     .background(catColor.copy(alpha = 0.12f)),
             ) {
-                Text(getCategoryEmoji(tx.category?.icon ?: "more_horiz"), fontSize = 20.sp)
+                Text(getCategoryEmoji(tx.category?.icon ?: "more_horiz"), fontSize = 24.sp)
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     tx.memo?.takeIf { it.isNotBlank() } ?: tx.category?.name ?: "기타",
-                    style      = MaterialTheme.typography.bodyLarge,
+                    fontSize   = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color      = 거지방Colors.Gray900,
                 )
                 if (tx.category != null) {
-                    Text(tx.category.name, style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400, fontSize = 12.sp)
+                    Text(tx.category.name, style = MaterialTheme.typography.bodyLarge, color = 거지방Colors.Gray400)
                 }
             }
-            AmountText(amount = tx.amount, kind = tx.kind, style = MaterialTheme.typography.bodyLarge)
+            AmountText(amount = tx.amount, kind = tx.kind, style = MaterialTheme.typography.titleMedium)
         }
         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
             DropdownMenuItem(
