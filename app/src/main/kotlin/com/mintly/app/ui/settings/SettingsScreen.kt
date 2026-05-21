@@ -123,12 +123,6 @@ fun SettingsScreen(
                             Spacer(Modifier.height(2.dp))
                             CoinChip(amount = profile.coins)
                         }
-                        IconButton(
-                            onClick = { showEditName = true },
-                            modifier = Modifier.size(40.dp).clip(CircleShape).background(Color.White),
-                        ) {
-                            Icon(Icons.Rounded.Edit, null, tint = 거지방Colors.Mint500, modifier = Modifier.size(18.dp))
-                        }
                     }
                 }
             }

@@ -142,6 +142,7 @@ data class Favorite(
 data class RankedMember(
     val profile: Profile,
     val spentAmount: Int,
+    val incomeAmount: Int = 0,
     val rank: Int,
     val isWinner: Boolean,
     val isLoser: Boolean,

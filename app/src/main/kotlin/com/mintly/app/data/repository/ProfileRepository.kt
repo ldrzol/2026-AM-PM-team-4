@@ -5,6 +5,9 @@ import com.mintly.app.data.supabase.SupabaseManager
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,7 +28,18 @@ class ProfileRepository @Inject constructor(
 
     suspend fun updateProfile(updates: Map<String, Any?>): Result<Unit> = runCatching {
         val uid = client.auth.currentUserOrNull()?.id ?: error("Not logged in")
-        client.from("profiles").update(updates) { filter { eq("id", uid) } }
+        val json = buildJsonObject {
+            updates.forEach { (k, v) ->
+                when (v) {
+                    null      -> put(k, JsonNull)
+                    is String  -> put(k, v)
+                    is Int     -> put(k, v)
+                    is Boolean -> put(k, v)
+                    else       -> put(k, v.toString())
+                }
+            }
+        }
+        client.from("profiles").update(json) { filter { eq("id", uid) } }
     }
 
     suspend fun updateAvatar(color: String, face: Map<String, String>): Result<Unit> =

@@ -160,8 +160,10 @@ class SettingsViewModel @Inject constructor(
 
     fun changePassword(newPassword: String) {
         viewModelScope.launch {
-            // TODO: connect to authRepo.changePassword when available
-            _uiState.value = _uiState.value.copy(successMsg = "비밀번호 변경 기능은 준비 중입니다")
+            authRepo.changePassword(newPassword).fold(
+                onSuccess = { _uiState.value = _uiState.value.copy(successMsg = "비밀번호가 변경되었습니다") },
+                onFailure = { _uiState.value = _uiState.value.copy(error = "변경 실패: ${it.message}") }
+            )
         }
     }
 

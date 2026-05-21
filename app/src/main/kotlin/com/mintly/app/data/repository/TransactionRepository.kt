@@ -8,6 +8,8 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,9 +41,19 @@ class TransactionRepository @Inject constructor(
 
     suspend fun addTransaction(tx: Transaction): Result<Transaction> = runCatching {
         val uid = client.auth.currentUserOrNull()?.id ?: error("Not logged in")
-        client.from("transactions")
-            .insert(tx.copy(userId = uid))
-            .decodeSingle<Transaction>()
+        val id  = java.util.UUID.randomUUID().toString()
+        val newTx = tx.copy(id = id, userId = uid)
+        client.from("transactions").insert(buildJsonObject {
+            put("id",          newTx.id)
+            put("user_id",     newTx.userId)
+            newTx.groupId?.let    { put("group_id",    it) }
+            put("kind",        newTx.kind)
+            newTx.categoryId?.let { put("category_id", it) }
+            put("amount",      newTx.amount)
+            newTx.memo?.let       { put("memo",        it) }
+            put("occurred_on", newTx.occurredOn)
+        })
+        newTx
     }
 
     suspend fun updateTransaction(tx: Transaction): Result<Unit> = runCatching {
@@ -73,7 +85,14 @@ class TransactionRepository @Inject constructor(
 
     suspend fun addCategory(category: Category): Result<Unit> = runCatching {
         val uid = client.auth.currentUserOrNull()?.id ?: error("Not logged in")
-        client.from("categories").insert(category.copy(ownerId = uid))
+        client.from("categories").insert(buildJsonObject {
+            put("owner_id",   uid)
+            put("name",       category.name)
+            put("icon",       category.icon)
+            put("color",      category.color)
+            put("kind",       category.kind)
+            put("sort_order", category.sortOrder)
+        })
     }
 
     suspend fun deleteCategory(id: String): Result<Unit> = runCatching {
@@ -96,7 +115,14 @@ class TransactionRepository @Inject constructor(
 
     suspend fun addFavorite(fav: Favorite): Result<Unit> = runCatching {
         val uid = client.auth.currentUserOrNull()?.id ?: error("Not logged in")
-        client.from("favorites").insert(fav.copy(userId = uid))
+        client.from("favorites").insert(buildJsonObject {
+            put("user_id",  uid)
+            put("kind",     fav.kind)
+            fav.categoryId?.let { put("category_id", it) }
+            fav.amount?.let     { put("amount",      it) }
+            fav.memo?.let       { put("memo",        it) }
+            put("sort_order", fav.sortOrder)
+        })
     }
 
     suspend fun deleteFavorite(id: String): Result<Unit> = runCatching {

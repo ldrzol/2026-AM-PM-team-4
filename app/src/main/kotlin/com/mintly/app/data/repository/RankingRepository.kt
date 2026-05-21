@@ -48,7 +48,22 @@ class RankingRepository @Inject constructor(
             if (rankings.isNotEmpty()) {
                 rankings.mapNotNull { r ->
                     val profile = r.profile ?: return@mapNotNull null
-                    RankedMember(profile, r.spentAmount, r.rank, r.isWinner, r.isLoser, "%,d원".format(r.spentAmount))
+                    // income은 daily_rankings에 없으므로 transactions에서 별도 조회
+                    val income = runCatching {
+                        client.from("transactions")
+                            .select(Columns.raw("amount")) {
+                                filter {
+                                    eq("user_id",     r.userId)
+                                    eq("group_id",    groupId)
+                                    eq("occurred_on", date)
+                                    eq("kind",        "income")
+                                }
+                            }
+                            .decodeList<Map<String, Int>>()
+                            .sumOf { it["amount"] ?: 0 }
+                    }.getOrElse { 0 }
+                    val sv = buildShareValue(profile.shareMode, r.spentAmount, income)
+                    RankedMember(profile, r.spentAmount, income, r.rank, r.isWinner, r.isLoser, sv)
                 }
             } else {
                 // 정산 전이라면 transactions 테이블에서 실시간 합산
@@ -62,53 +77,80 @@ class RankingRepository @Inject constructor(
             .select(Columns.raw("*, profile:profiles(*)")) { filter { eq("group_id", groupId) } }
             .decodeList<Map<String, Any?>>()
 
-        // 각 멤버의 오늘 지출 합산
+        // 각 멤버의 오늘 지출·수입 합산
+        data class MemberSpend(val userId: String, val spent: Int, val income: Int)
+
         val spendList = members.mapNotNull { row ->
             @Suppress("UNCHECKED_CAST")
             val profileMap = row["profile"] as? Map<String, Any?> ?: return@mapNotNull null
             val userId = profileMap["id"] as? String ?: return@mapNotNull null
-            val displayName = profileMap["display_name"] as? String ?: ""
             val spent = runCatching {
                 client.from("transactions")
                     .select(Columns.raw("amount")) {
                         filter {
-                            eq("user_id", userId)
-                            eq("group_id", groupId)
+                            eq("user_id",     userId)
+                            eq("group_id",    groupId)
                             eq("occurred_on", date)
-                            eq("kind", "expense")
+                            eq("kind",        "expense")
                         }
                     }
                     .decodeList<Map<String, Int>>()
                     .sumOf { it["amount"] ?: 0 }
             }.getOrElse { 0 }
-            Pair(userId, spent)
-        }.sortedBy { it.second }
+            val income = runCatching {
+                client.from("transactions")
+                    .select(Columns.raw("amount")) {
+                        filter {
+                            eq("user_id",     userId)
+                            eq("group_id",    groupId)
+                            eq("occurred_on", date)
+                            eq("kind",        "income")
+                        }
+                    }
+                    .decodeList<Map<String, Int>>()
+                    .sumOf { it["amount"] ?: 0 }
+            }.getOrElse { 0 }
+            MemberSpend(userId, spent, income)
+        }.sortedBy { it.spent }
 
-        return spendList.mapIndexed { idx, (uid, spent) ->
+        return spendList.mapIndexed { idx, ms ->
             val profileRow = members.find {
                 @Suppress("UNCHECKED_CAST")
-                (it["profile"] as? Map<String, Any?>)?.get("id") == uid
+                (it["profile"] as? Map<String, Any?>)?.get("id") == ms.userId
             }
             @Suppress("UNCHECKED_CAST")
             val pm = profileRow?.get("profile") as? Map<String, Any?> ?: return@mapIndexed null
+            val shareMode = pm["share_mode"] as? String ?: "percent"
             val profile = Profile(
-                id = uid,
-                username = pm["username"] as? String ?: "",
-                displayName = pm["display_name"] as? String ?: "",
-                avatarColor = pm["avatar_color"] as? String ?: "mint",
-                avatarFace = (pm["avatar_face"] as? Map<*, *>)
+                id            = ms.userId,
+                username      = pm["username"]      as? String ?: "",
+                displayName   = pm["display_name"]  as? String ?: "",
+                avatarColor   = pm["avatar_color"]  as? String ?: "mint",
+                avatarFace    = (pm["avatar_face"] as? Map<*, *>)
                     ?.entries?.associate { (k, v) -> k.toString() to v.toString() }
                     ?: emptyMap(),
-                coins = (pm["coins"] as? Number)?.toInt() ?: 0,
-                shareMode = pm["share_mode"] as? String ?: "percent",
-                currentHat = pm["current_hat"] as? String,
+                coins         = (pm["coins"] as? Number)?.toInt() ?: 0,
+                shareMode     = shareMode,
+                currentHat    = pm["current_hat"]    as? String,
                 currentOutfit = pm["current_outfit"] as? String,
                 hasCrownUntil = pm["has_crown_until"] as? String,
-                forcedOutfit = pm["forced_outfit"] as? String,
+                forcedOutfit  = pm["forced_outfit"]  as? String,
             )
-            RankedMember(profile, spent, idx + 1, idx == 0, idx == spendList.lastIndex, "${spent}원")
+            val sv = buildShareValue(shareMode, ms.spent, ms.income)
+            RankedMember(profile, ms.spent, ms.income, idx + 1, idx == 0, idx == spendList.lastIndex, sv)
         }.filterNotNull()
     }
+
+    private fun buildShareValue(shareMode: String, spent: Int, income: Int): String =
+        when (shareMode) {
+            "percent" -> if (income > 0) {
+                val pct = (spent.toDouble() / income * 100).toInt()
+                "지출 ${pct}% (수입 대비)"
+            } else {
+                "지출 %,d원".format(spent)
+            }
+            else -> "수입 %,d원 / 지출 %,d원".format(income, spent)
+        }
 
     fun rankingChanges(groupId: String): Flow<Unit> = flow {
         val channel = client.channel("ranking-$groupId")

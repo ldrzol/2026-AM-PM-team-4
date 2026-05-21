@@ -53,4 +53,8 @@ class AuthRepository @Inject constructor(
     }.getOrNull()
 
     suspend fun isLoggedIn(): Boolean = client.auth.currentUserOrNull() != null
+
+    suspend fun changePassword(newPassword: String): Result<Unit> = runCatching {
+        client.auth.updateUser { password = newPassword }
+    }
 }

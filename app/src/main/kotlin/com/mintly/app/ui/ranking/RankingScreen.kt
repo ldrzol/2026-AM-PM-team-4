@@ -508,19 +508,58 @@ private fun FriendProfileDialog(
                         shape = Shape14,
                         color = 거지방Colors.Mint50,
                         border = BorderStroke(1.dp, 거지방Colors.Mint200),
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Text("오늘 지출", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Gray500)
-                            Text(
-                                rankedMember.shareValue,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = 거지방Colors.Expense,
-                            )
+                            // shareMode에 따라 다른 정보 표시
+                            if (profile.shareMode == "percent") {
+                                val pct = if (rankedMember.incomeAmount > 0)
+                                    (rankedMember.spentAmount.toDouble() / rankedMember.incomeAmount * 100).toInt()
+                                else null
+                                Text("수입 대비 지출", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Gray500)
+                                Text(
+                                    if (pct != null) "${pct}%" else "정보 없음",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = 거지방Colors.Expense,
+                                )
+                                if (pct != null) {
+                                    Text(
+                                        "수입 %,d원 → 지출 %,d원".format(rankedMember.incomeAmount, rankedMember.spentAmount),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = 거지방Colors.Gray400,
+                                    )
+                                }
+                            } else {
+                                // amount 모드
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text("수입", style = MaterialTheme.typography.labelSmall, color = 거지방Colors.Gray500)
+                                        Text(
+                                            "+%,d원".format(rankedMember.incomeAmount),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = 거지방Colors.Income,
+                                        )
+                                    }
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text("지출", style = MaterialTheme.typography.labelSmall, color = 거지방Colors.Gray500)
+                                        Text(
+                                            "-%,d원".format(rankedMember.spentAmount),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = 거지방Colors.Expense,
+                                        )
+                                    }
+                                }
+                            }
                             Text(
                                 "현재 ${rankedMember.rank}위",
                                 style = MaterialTheme.typography.labelMedium,
