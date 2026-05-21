@@ -27,9 +27,12 @@ import com.mintly.app.ui.theme.Shape14
 import com.mintly.app.ui.theme.ShapePill
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
+
+private val KOREA_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
 
 @Composable
 fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
@@ -291,7 +294,7 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
     if (showFavSheet) {
         QuickFavoritesSheet(
             favorites   = state.favorites,
-            date        = selectedDate ?: LocalDate.now(),
+            date        = selectedDate ?: LocalDate.now(KOREA_ZONE),
             onAdd       = { tx -> vm.addTransaction(tx) },
             onDismiss   = { showFavSheet = false },
             onOpenFull  = { showFavSheet = false; showAddSheet = true },
@@ -339,7 +342,7 @@ private fun BudgetCalendar(
     val ym          = YearMonth.of(year, month)
     val firstDay    = ym.atDay(1).dayOfWeek.value % 7   // 0=일요일
     val daysInMonth = ym.lengthOfMonth()
-    val today       = LocalDate.now()
+    val today       = LocalDate.now(KOREA_ZONE)
 
     Column(modifier = Modifier.fillMaxWidth()) {
         // 요일 헤더

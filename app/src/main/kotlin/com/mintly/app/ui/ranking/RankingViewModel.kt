@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.mintly.app.data.model.FriendGroup
 import com.mintly.app.data.model.Profile
 import com.mintly.app.data.model.RankedMember
+import com.mintly.app.data.repository.AuthRepository
 import com.mintly.app.data.repository.GroupRepository
 import com.mintly.app.data.repository.RankingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,10 +22,12 @@ data class RankingUiState(
     val rankings: List<RankedMember> = emptyList(),
     val selectedFriend: Profile? = null,
     val isLoading: Boolean = false,
+    val myUserId: String? = null,
 )
 
 @HiltViewModel
 class RankingViewModel @Inject constructor(
+    private val authRepo: AuthRepository,
     private val groupRepo: GroupRepository,
     private val rankingRepo: RankingRepository,
 ) : ViewModel() {
@@ -39,9 +42,15 @@ class RankingViewModel @Inject constructor(
     fun loadGroups() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
+            val myUserId = authRepo.currentUserId()
             val groups = groupRepo.getMyGroups()
             val firstGroupId = _uiState.value.selectedGroupId ?: groups.firstOrNull()?.id
-            _uiState.value = _uiState.value.copy(groups = groups, selectedGroupId = firstGroupId, isLoading = false)
+            _uiState.value = _uiState.value.copy(
+                groups = groups,
+                selectedGroupId = firstGroupId,
+                isLoading = false,
+                myUserId = myUserId,
+            )
             firstGroupId?.let { loadRanking(it) }
         }
     }
@@ -70,8 +79,8 @@ class RankingViewModel @Inject constructor(
     fun startRealtime() {
         viewModelScope.launch {
             val groupId = _uiState.value.selectedGroupId ?: return@launch
-            rankingRepo.rankingChanges(groupId).collect {
-                delay(500)
+            rankingRepo.anyRankingChange(groupId).collect {
+                delay(300)
                 loadRanking(groupId)
             }
         }

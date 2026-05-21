@@ -13,11 +13,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 
+private val KOREA_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
+
 data class BudgetUiState(
-    val year: Int  = LocalDate.now().year,
-    val month: Int = LocalDate.now().monthValue,
+    val year: Int  = LocalDate.now(KOREA_ZONE).year,
+    val month: Int = LocalDate.now(KOREA_ZONE).monthValue,
     val transactions: List<Transaction> = emptyList(),
     val categories: List<Category> = emptyList(),
     val favorites: List<Favorite> = emptyList(),

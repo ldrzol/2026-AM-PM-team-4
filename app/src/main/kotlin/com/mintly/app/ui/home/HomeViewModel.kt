@@ -4,12 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mintly.app.data.model.Category
 import com.mintly.app.data.model.Profile
-import com.mintly.app.data.model.RankedMember
-import com.mintly.app.data.model.Transaction
 import com.mintly.app.data.model.UserCostume
-import com.mintly.app.data.repository.GroupRepository
 import com.mintly.app.data.repository.ProfileRepository
-import com.mintly.app.data.repository.RankingRepository
 import com.mintly.app.data.repository.ShopRepository
 import com.mintly.app.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,8 +14,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
+
+private val KOREA_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
 
 data class HomeUiState(
     val profile: Profile? = null,
@@ -29,11 +28,10 @@ data class HomeUiState(
     val monthlyExpense: Int = 0,
     val monthlyStats: Map<Category, Int> = emptyMap(),
     val inventory: List<UserCostume> = emptyList(),
-    val friendsRanking: List<RankedMember> = emptyList(),
-    val groupId: String? = null,
     val checkinWeekDays: List<Boolean> = List(7) { false },
     val hasCheckedToday: Boolean = false,
     val checkInMessage: String? = null,
+    val checkInError: String? = null,
     val isLoading: Boolean = false,
 )
 
@@ -42,8 +40,6 @@ class HomeViewModel @Inject constructor(
     private val profileRepo: ProfileRepository,
     private val txRepo: TransactionRepository,
     private val shopRepo: ShopRepository,
-    private val groupRepo: GroupRepository,
-    private val rankingRepo: RankingRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -57,7 +53,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             val profile = profileRepo.getMyProfile()
-            val now     = LocalDate.now()
+            val now     = LocalDate.now(KOREA_ZONE)
 
             // 이번달 거래 한 번만 조회
             val allMonthTx = txRepo.getTransactionsForMonth(now.year, now.monthValue)
@@ -69,13 +65,6 @@ class HomeViewModel @Inject constructor(
             val monthlyExpense  = allMonthTx.filter { it.kind == "expense" }.sumOf { it.amount }
 
             val inventory = shopRepo.getMyInventory()
-
-            // 그룹 & 친구 랭킹
-            val groups     = groupRepo.getMyGroups()
-            val firstGroup = groups.firstOrNull()
-            val ranking    = if (firstGroup != null) {
-                runCatching { rankingRepo.getTodayRanking(firstGroup.id) }.getOrElse { emptyList() }
-            } else emptyList()
 
             // 출석체크
             val weekDays      = computeCheckinWeek(profile?.checkStreak ?: 0, profile?.lastCheckin)
@@ -89,10 +78,10 @@ class HomeViewModel @Inject constructor(
                 monthlyExpense = monthlyExpense,
                 monthlyStats   = monthlyStats,
                 inventory      = inventory,
-                friendsRanking = ranking,
-                groupId        = firstGroup?.id,
                 checkinWeekDays = weekDays,
                 hasCheckedToday = hasChecked,
+                checkInMessage = _uiState.value.checkInMessage,
+                checkInError = _uiState.value.checkInError,
                 isLoading      = false,
             )
         }
@@ -102,17 +91,21 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             profileRepo.checkIn().fold(
                 onSuccess = { coins ->
-                    if (coins > 0) {
-                        _uiState.value = _uiState.value.copy(
-                            checkInMessage = "+${coins}코인 획득! 🎉",
-                            hasCheckedToday = true,
-                        )
-                        load()
-                        kotlinx.coroutines.delay(2500)
-                        _uiState.value = _uiState.value.copy(checkInMessage = null)
-                    }
+                    _uiState.value = _uiState.value.copy(
+                        checkInMessage = if (coins > 0) "+${coins}코인 획득! 🎉" else "이미 오늘 출석했어요",
+                        hasCheckedToday = true,
+                    )
+                    load()
+                    kotlinx.coroutines.delay(2500)
+                    _uiState.value = _uiState.value.copy(checkInMessage = null, checkInError = null)
                 },
-                onFailure = { /* ignore */ }
+                onFailure = {
+                    _uiState.value = _uiState.value.copy(
+                        checkInError = "출석체크 실패: ${it.message ?: "잠시 후 다시 시도해 주세요"}",
+                    )
+                    kotlinx.coroutines.delay(2500)
+                    _uiState.value = _uiState.value.copy(checkInError = null)
+                }
             )
         }
     }
@@ -132,7 +125,7 @@ class HomeViewModel @Inject constructor(
     // ─── 출석 주간 계산 ───────────────────────────────────────
     private fun computeCheckinWeek(streak: Int, lastCheckin: String?): List<Boolean> {
         if (streak <= 0 || lastCheckin == null) return List(7) { false }
-        val today    = LocalDate.now()
+        val today    = LocalDate.now(KOREA_ZONE)
         val dow      = today.dayOfWeek.value   // Mon=1, Sun=7
         val lastDate = runCatching { LocalDate.parse(lastCheckin) }.getOrNull()
             ?: return List(7) { false }

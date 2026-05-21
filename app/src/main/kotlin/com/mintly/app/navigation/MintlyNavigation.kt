@@ -3,6 +3,7 @@ package com.mintly.app.navigation
 import androidx.annotation.DrawableRes
 import com.mintly.app.R
 import androidx.compose.animation.*
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.*
@@ -119,43 +120,46 @@ fun MainScaffold(onLogout: () -> Unit) {
 
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 0.dp,
-            ) {
-                TABS.forEach { tab ->
-                    val selected = backStackEntry?.destination?.hierarchy
-                        ?.any { it.route == tab.route } == true
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            tabNav.navigate(tab.route) {
-                                popUpTo(tabNav.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = {
-                            Icon(
-                                painter = painterResource(tab.iconRes),
-                                contentDescription = tab.label,
-                                modifier = Modifier.size(28.dp),
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = tab.label,
-                                fontSize = 14.sp,
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor   = 거지방Colors.Mint400,
-                            selectedTextColor   = 거지방Colors.Mint400,
-                            indicatorColor      = 거지방Colors.Mint50,
-                            unselectedIconColor = 거지방Colors.Gray400,
-                            unselectedTextColor = 거지방Colors.Gray400,
-                        ),
-                    )
+            Column {
+                HorizontalDivider(color = 거지방Colors.Gray100, thickness = 1.dp)
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 0.dp,
+                ) {
+                    TABS.forEach { tab ->
+                        val selected = backStackEntry?.destination?.hierarchy
+                            ?.any { it.route == tab.route } == true
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                tabNav.navigate(tab.route) {
+                                    popUpTo(tabNav.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(tab.iconRes),
+                                    contentDescription = tab.label,
+                                    modifier = Modifier.size(28.dp),
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = tab.label,
+                                    fontSize = 14.sp,
+                                )
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor   = 거지방Colors.Mint400,
+                                selectedTextColor   = 거지방Colors.Mint400,
+                                indicatorColor      = 거지방Colors.Mint50,
+                                unselectedIconColor = 거지방Colors.Gray400,
+                                unselectedTextColor = 거지방Colors.Gray400,
+                            ),
+                        )
+                    }
                 }
             }
         }

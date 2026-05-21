@@ -15,6 +15,7 @@ import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.postgresChangeFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.merge
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -76,9 +77,11 @@ class RankingRepository @Inject constructor(
      * - 한 명이라도 입력하면 순위 표시, 미입력자는 맨 아래 "미입력" 표기
      */
     private suspend fun getLiveGroupSpend(groupId: String, date: String): List<RankedMember> {
-        val members = client.from("group_members")
-            .select(Columns.raw("*, profile:profiles(*)")) { filter { eq("group_id", groupId) } }
-            .decodeList<GroupMember>()
+        val members = runCatching {
+            client.from("group_members")
+                .select(Columns.raw("*, profile:profiles(*)")) { filter { eq("group_id", groupId) } }
+                .decodeList<GroupMember>()
+        }.getOrElse { emptyList() }
 
         data class MemberSpend(val profile: Profile, val spent: Int, val income: Int)
 
@@ -90,7 +93,6 @@ class RankingRepository @Inject constructor(
                     .select(Columns.raw("amount")) {
                         filter {
                             eq("user_id",     profile.id)
-                            eq("group_id",    groupId)
                             eq("occurred_on", date)
                             eq("kind",        "expense")
                         }
@@ -104,7 +106,6 @@ class RankingRepository @Inject constructor(
                     .select(Columns.raw("amount")) {
                         filter {
                             eq("user_id",     profile.id)
-                            eq("group_id",    groupId)
                             eq("occurred_on", date)
                             eq("kind",        "income")
                         }
@@ -172,9 +173,24 @@ class RankingRepository @Inject constructor(
 
     fun rankingChanges(groupId: String): Flow<Unit> = flow {
         val channel = client.channel("ranking-$groupId")
-        channel.postgresChangeFlow<PostgresAction>(schema = "public") {
+        val changeFlow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = "daily_rankings"
             filter(FilterOperation("group_id", FilterOperator.EQ, groupId))
-        }.collect { emit(Unit) }
+        }
+        channel.subscribe()
+        changeFlow.collect { emit(Unit) }
     }
+
+    fun transactionChanges(groupId: String): Flow<Unit> = flow {
+        val channel = client.channel("tx-ranking-$groupId")
+        val changeFlow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
+            table = "transactions"
+            filter(FilterOperation("group_id", FilterOperator.EQ, groupId))
+        }
+        channel.subscribe()
+        changeFlow.collect { emit(Unit) }
+    }
+
+    fun anyRankingChange(groupId: String): Flow<Unit> =
+        merge(rankingChanges(groupId), transactionChanges(groupId))
 }

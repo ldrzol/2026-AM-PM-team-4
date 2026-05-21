@@ -10,8 +10,11 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private val KOREA_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
 
 @Singleton
 class ProfileRepository @Inject constructor(
@@ -37,6 +40,13 @@ class ProfileRepository @Inject constructor(
                     is String  -> put(k, v)
                     is Int     -> put(k, v)
                     is Boolean -> put(k, v)
+                    is Map<*, *> -> {
+                        put(k, buildJsonObject {
+                            v.forEach { (mapKey, mapValue) ->
+                                if (mapKey is String && mapValue is String) put(mapKey, mapValue)
+                            }
+                        })
+                    }
                     else       -> put(k, v.toString())
                 }
             }
@@ -64,27 +74,32 @@ class ProfileRepository @Inject constructor(
 
     /** 출석체크 — 이미 오늘 했으면 0, 처음이면 지급된 코인 수 반환 */
     suspend fun checkIn(): Result<Int> = runCatching {
+        client.auth.currentUserOrNull()?.id ?: error("Not logged in")
+        runCatching {
+            client.postgrest.rpc("check_in", buildJsonObject { }).decodeAs<Int>()
+        }.getOrElse {
+            checkInLocally()
+        }
+    }
+
+    private suspend fun checkInLocally(): Int {
         val uid = client.auth.currentUserOrNull()?.id ?: error("Not logged in")
         val profile = getMyProfile() ?: error("Profile not found")
 
-        val today = LocalDate.now().toString()
-        if (profile.lastCheckin == today) return@runCatching 0
+        val today = LocalDate.now(KOREA_ZONE).toString()
+        if (profile.lastCheckin == today) return 0
 
-        val yesterday   = LocalDate.now().minusDays(1).toString()
+        val yesterday   = LocalDate.now(KOREA_ZONE).minusDays(1).toString()
         val newStreak   = if (profile.lastCheckin == yesterday) profile.checkStreak + 1 else 1
-        val coinsToAdd  = if (newStreak % 7 == 0) 50 else 5
+        val coinsToAdd  = 50
 
         val json = buildJsonObject {
             put("check_streak", newStreak)
             put("last_checkin", today)
+            put("coins", profile.coins + coinsToAdd)
         }
         client.from("profiles").update(json) { filter { eq("id", uid) } }
-
-        client.postgrest.rpc("add_coins", buildJsonObject {
-            put("p_user_id", uid)
-            put("p_amount",  coinsToAdd)
-        })
-        coinsToAdd
+        return coinsToAdd
     }
 
     suspend fun getGroupMemberProfiles(groupId: String): List<Profile> = runCatching {

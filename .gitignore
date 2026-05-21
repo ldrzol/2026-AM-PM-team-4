@@ -12,3 +12,4 @@ app/build/
 !debug.keystore
 .kotlin/
 .claude/
+supabase/.temp/

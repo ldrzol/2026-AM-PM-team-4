@@ -3,6 +3,7 @@ package com.mintly.app.data.repository
 import com.mintly.app.data.model.Costume
 import com.mintly.app.data.model.DEFAULT_COSTUMES
 import com.mintly.app.data.model.DEFAULT_ROULETTE_SEGMENTS
+import com.mintly.app.data.model.Profile
 import com.mintly.app.data.model.RouletteSegment
 import com.mintly.app.data.model.RouletteTicket
 import com.mintly.app.data.model.UserCostume
@@ -23,13 +24,23 @@ class ShopRepository @Inject constructor(
 ) {
     private val client get() = supabase.client
 
+    companion object {
+        const val TICKET_PRICE = 300
+    }
+
     // ── 코스튬 목록 ───────────────────────────────────────────
+
+    private val hiddenShopCostumeIds = setOf("hat_cap", "hat_bucket", "hat_side_ribbon")
 
     suspend fun getShopCostumes(): List<Costume> = runCatching {
         client.from("costumes")
             .select { filter { eq("is_shop", true) } }
             .decodeList<Costume>()
-    }.getOrElse { DEFAULT_COSTUMES.filter { it.isShop } }
+            .filterNot { it.id in hiddenShopCostumeIds || it.name.contains("버킷") || it.name.contains("사이드 리본") }
+    }.getOrElse {
+        DEFAULT_COSTUMES.filter { it.isShop }
+            .filterNot { it.id in hiddenShopCostumeIds || it.name.contains("버킷") || it.name.contains("사이드 리본") }
+    }
 
     suspend fun getMyInventory(): List<UserCostume> {
         val uid = client.auth.currentUserOrNull()?.id ?: return emptyList()
@@ -53,6 +64,20 @@ class ShopRepository @Inject constructor(
     }
 
     // ── 룰렛 ─────────────────────────────────────────────────
+
+    suspend fun purchaseRouletteTicket(): Result<Unit> = runCatching {
+        val uid = client.auth.currentUserOrNull()?.id ?: error("Not logged in")
+        val profile = client.from("profiles")
+            .select { filter { eq("id", uid) } }
+            .decodeSingle<Profile>()
+        if (profile.coins < TICKET_PRICE) error("코인이 부족합니다 (필요: ${TICKET_PRICE}코인)")
+        client.postgrest.rpc("add_coins", buildJsonObject {
+            put("p_user_id", uid)
+            put("p_amount", -TICKET_PRICE)
+        })
+        client.from("roulette_tickets")
+            .insert(mapOf("user_id" to uid, "source" to "shop"))
+    }
 
     suspend fun getMyTicketCount(): Int {
         val uid = client.auth.currentUserOrNull()?.id ?: return 0

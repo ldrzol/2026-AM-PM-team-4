@@ -11,7 +11,7 @@ data class Profile(
     @SerialName("display_name") val displayName: String = "",
     @SerialName("avatar_seed")  val avatarSeed: String = "default",
     @SerialName("avatar_color") val avatarColor: String = "mint",
-    @SerialName("avatar_face")  val avatarFace: Map<String, String> = emptyMap(),
+    @SerialName("avatar_face")  val avatarFace: Map<String, String>? = null,
     val email: String? = null,
     val coins: Int = 0,
     val phone: String? = null,

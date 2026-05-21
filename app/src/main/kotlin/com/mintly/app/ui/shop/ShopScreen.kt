@@ -98,8 +98,9 @@ fun ShopScreen(vm: ShopViewModel = hiltViewModel()) {
             RouletteTab(state = state, onSpin = vm::spinRoulette)
         } else {
             CostumeStoreTab(
-                state  = state,
-                onBuy  = vm::purchaseCostume,
+                state       = state,
+                onBuy       = vm::purchaseCostume,
+                onBuyTicket = vm::purchaseTicket,
             )
         }
     }
@@ -297,7 +298,7 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Rounded.ShoppingCart, null, tint = 거지방Colors.Mint500, modifier = Modifier.size(16.dp))
-                    Text("상점에서 코인 500개로 구매 가능", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray700)
+                    Text("상점에서 코인 300개로 구매 가능", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray700)
                 }
             }
         }
@@ -354,7 +355,7 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
 
 // ─── 코스튬 상점 탭 ────────────────────────────────────────
 @Composable
-private fun CostumeStoreTab(state: ShopUiState, onBuy: (Costume) -> Unit) {
+private fun CostumeStoreTab(state: ShopUiState, onBuy: (Costume) -> Unit, onBuyTicket: () -> Unit) {
     val accessories = state.shopCostumes.filter { it.kind == "hat" }
 
     Column(
@@ -364,9 +365,14 @@ private fun CostumeStoreTab(state: ShopUiState, onBuy: (Costume) -> Unit) {
             .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        // ── 룰렛 티켓 ──────────────────────────────────────
+        Text("룰렛 티켓 🎟️", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        TicketPurchaseCard(coins = state.coins, onBuy = onBuyTicket)
+
+        // ── 헤어 악세서리 ───────────────────────────────────
         if (accessories.isEmpty()) {
             Box(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text("준비 중입니다 🎀", style = MaterialTheme.typography.bodyLarge, color = 거지방Colors.Gray400)
@@ -391,6 +397,54 @@ private fun CostumeStoreTab(state: ShopUiState, onBuy: (Costume) -> Unit) {
             }
         }
         Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun TicketPurchaseCard(coins: Int, onBuy: () -> Unit) {
+    val canAfford = coins >= 300
+    Surface(
+        shape = Shape14,
+        color = if (canAfford) 거지방Colors.Mint50 else 거지방Colors.Gray50,
+        border = BorderStroke(
+            if (canAfford) 1.5.dp else 1.dp,
+            if (canAfford) 거지방Colors.Mint300 else 거지방Colors.Gray200,
+        ),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text("🎟️", fontSize = 34.sp)
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    "룰렛 티켓 1장",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = 거지방Colors.Gray900,
+                )
+                Text(
+                    "룰렛을 한 번 돌릴 수 있어요",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = 거지방Colors.Gray500,
+                )
+            }
+            Surface(
+                shape = ShapePill,
+                color = if (canAfford) 거지방Colors.Mint400 else 거지방Colors.Gray200,
+                modifier = Modifier.clickable(enabled = canAfford, onClick = onBuy),
+            ) {
+                Text(
+                    "🪙 300",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (canAfford) androidx.compose.ui.graphics.Color.White else 거지방Colors.Gray500,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                )
+            }
+        }
     }
 }
 

@@ -52,17 +52,31 @@ class ChatViewModel @Inject constructor(
     val myUserId: StateFlow<String?> = _myUserId.asStateFlow()
 
     private var currentRoomId: String? = null
+    private var initialized = false
 
     fun init(groupId: String, groupName: String) {
+        if (initialized) return
+        initialized = true
         viewModelScope.launch {
             _myUserId.value = authRepo.currentUserId()
-            val room = chatRepo.getOrCreateChatRoom(groupId, groupName)
+            val room = runCatching { chatRepo.getOrCreateChatRoom(groupId, groupName) }.getOrNull() ?: return@launch
             currentRoomId = room.id
             _messages.value = chatRepo.getMessages(room.id)
-
-            // 실시간 구독
-            chatRepo.messageFlow(room.id).collect { msg ->
-                _messages.value = _messages.value + msg
+            launch {
+                chatRepo.messageFlow(room.id).collect {
+                    val updated = chatRepo.getMessages(room.id)
+                    if (updated.isNotEmpty()) _messages.value = updated
+                }
+            }
+            // 폴링 폴백: Realtime이 안 될 때도 5초마다 새 메시지 수신
+            launch {
+                while (true) {
+                    kotlinx.coroutines.delay(5_000)
+                    val refreshed = chatRepo.getMessages(room.id)
+                    if (refreshed.isNotEmpty() && refreshed != _messages.value) {
+                        _messages.value = refreshed
+                    }
+                }
             }
         }
     }
@@ -72,7 +86,9 @@ class ChatViewModel @Inject constructor(
         if (content.isBlank()) return
         viewModelScope.launch {
             chatRepo.sendMessage(roomId, content.trim())
-            _messages.value = chatRepo.getMessages(roomId)
+            // getMessages 실패 시 기존 목록 유지
+            val updated = chatRepo.getMessages(roomId)
+            if (updated.isNotEmpty()) _messages.value = updated
         }
     }
 }

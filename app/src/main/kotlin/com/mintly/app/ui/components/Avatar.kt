@@ -13,7 +13,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -68,7 +67,7 @@ fun 거지방Avatar(
         val sy = this.size.height / H
 
         withTransform({ scale(sx, sy, pivot = Offset.Zero) }) {
-            drawBlobCharacter(pal, hat)
+            drawBlobCharacter(pal, hat, face)
         }
     }
 }
@@ -77,24 +76,23 @@ fun 거지방Avatar(
 private fun DrawScope.drawBlobCharacter(
     pal: BodyPalette,
     hat: String?,
+    face: AvatarFace = AvatarFace(),
 ) {
-    val cx      = 60f
-    val cy      = 72f
-    val rx      = 44f
-    val ry      = 44f
-    val bodyTop = cy - ry   // = 28
+    val cx = 60f
+    val cy = 70f
+    val bodyTop = 23f
 
     // ── 그림자 ────────────────────────────────────────────────
     drawOval(
-        color   = Color(0x1A000000),
-        topLeft = Offset(cx - 26f, 132f),
-        size    = Size(52f, 8f),
+        color = Color(0x1A000000),
+        topLeft = Offset(19f, 136f),
+        size = Size(82f, 9f),
     )
 
     // ── 글로우 아우라 ─────────────────────────────────────────
     drawCircle(
         brush  = Brush.radialGradient(
-            colors = listOf(pal.body.copy(alpha = 0.20f), Color.Transparent),
+            colors = listOf(pal.body.copy(alpha = 0.16f), Color.Transparent),
             center = Offset(cx, cy),
             radius = 74f,
         ),
@@ -102,72 +100,127 @@ private fun DrawScope.drawBlobCharacter(
         center = Offset(cx, cy),
     )
 
-    // ── 귀 (바디 뒤쪽에) ─────────────────────────────────────
-    drawCircle(pal.body, radius = 12f, center = Offset(cx - rx + 6f, cy - ry + 12f))
-    drawCircle(pal.body, radius = 12f, center = Offset(cx + rx - 6f, cy - ry + 12f))
+    // ── 발 (몸 바닥에 붙임) ───────────────────────────────────
+    drawOval(pal.shade, topLeft = Offset(28f, 108f), size = Size(23f, 15f))
+    drawOval(pal.shade, topLeft = Offset(69f, 108f), size = Size(23f, 15f))
+
+    // ── 귀 ───────────────────────────────────────────────────
+    drawOval(pal.body, topLeft = Offset(6f, 55f), size = Size(27f, 55f))
+    drawOval(pal.body, topLeft = Offset(87f, 55f), size = Size(27f, 55f))
 
     // ── 메인 바디 ─────────────────────────────────────────────
     drawOval(
-        color   = pal.body,
-        topLeft = Offset(cx - rx, bodyTop),
-        size    = Size(rx * 2, ry * 2),
+        color = pal.body,
+        topLeft = Offset(18f, bodyTop),
+        size = Size(84f, 90f),
     )
 
     // ── 바디 하단 셰이딩 (입체감) ─────────────────────────────
     drawOval(
-        brush   = Brush.radialGradient(
-            colors = listOf(Color.Transparent, pal.shade.copy(alpha = 0.18f)),
-            center = Offset(cx, cy + 10f),
-            radius = ry * 1.1f,
-        ),
-        topLeft = Offset(cx - rx, bodyTop),
-        size    = Size(rx * 2, ry * 2),
+        color = Color.White.copy(alpha = 0.14f),
+        topLeft = Offset(33f, 72f),
+        size = Size(54f, 44f),
     )
 
     // ── 팔 ───────────────────────────────────────────────────
-    withTransform({ rotate(-20f, pivot = Offset(cx - rx + 4f, cy + 16f)) }) {
-        drawOval(pal.body, topLeft = Offset(cx - rx - 7f, cy + 5f), size = Size(15f, 27f))
-    }
-    withTransform({ rotate(20f, pivot = Offset(cx + rx - 4f, cy + 16f)) }) {
-        drawOval(pal.body, topLeft = Offset(cx + rx - 8f, cy + 5f), size = Size(15f, 27f))
-    }
+
 
     // ── 볼터치 ────────────────────────────────────────────────
     drawCircle(
-        color  = Color(0xFFFF8C73).copy(alpha = 0.42f),
-        radius = 10f,
-        center = Offset(cx - 20f, cy + 12f),
+        color = Color(0xFFE6A592).copy(alpha = 0.52f),
+        radius = 8.5f,
+        center = Offset(38f, 82f),
     )
     drawCircle(
-        color  = Color(0xFFFF8C73).copy(alpha = 0.42f),
-        radius = 10f,
-        center = Offset(cx + 20f, cy + 12f),
+        color = Color(0xFFE6A592).copy(alpha = 0.52f),
+        radius = 8.5f,
+        center = Offset(82f, 82f),
     )
 
-    // ── 눈 (웃는 ^_^ 아치) ────────────────────────────────────
-    val eyeY      = cy - 7f
-    val eyeStroke = Stroke(width = 3.2f, cap = StrokeCap.Round)
-    val leftEye   = Path().apply {
-        moveTo(cx - 22f, eyeY)
-        cubicTo(cx - 18f, eyeY - 9f, cx - 10f, eyeY - 9f, cx - 6f, eyeY)
-    }
-    val rightEye  = Path().apply {
-        moveTo(cx + 6f, eyeY)
-        cubicTo(cx + 10f, eyeY - 9f, cx + 18f, eyeY - 9f, cx + 22f, eyeY)
-    }
-    drawPath(leftEye,  FEATURE, style = eyeStroke)
-    drawPath(rightEye, FEATURE, style = eyeStroke)
+    // ── 눈 ────────────────────────────────────────────────────
+    drawEyes(face.eye)
 
     // ── 입 ───────────────────────────────────────────────────
-    val mouth = Path().apply {
-        moveTo(cx - 9f, cy + 8f)
-        cubicTo(cx - 5f, cy + 15f, cx + 5f, cy + 15f, cx + 9f, cy + 8f)
-    }
-    drawPath(mouth, FEATURE, style = Stroke(width = 2.6f, cap = StrokeCap.Round))
+    drawMouth(face.mouth)
 
     // ── 모자 / 헤어 악세서리 ─────────────────────────────────
     val hatId = hat?.removePrefix("hat_")
     drawHat(hatId, cx, bodyTop)
+}
+
+// ─── 눈 스타일 ────────────────────────────────────────────────
+private fun DrawScope.drawEyes(eye: String) {
+    val lx = 47f  // 왼눈 중심 x  (cx=60 기준 -13)
+    val rx = 73f  // 오른눈 중심 x (cx=60 기준 +13)
+    val ey = 65f  // 눈 중심 y
+    val stroke = Stroke(width = 3.2f, cap = StrokeCap.Round)
+
+    fun arcEye(hx: Float) = Path().apply {
+        moveTo(hx - 6f, ey + 5f)
+        cubicTo(hx - 3f, ey - 4f, hx + 3f, ey - 4f, hx + 6f, ey + 5f)
+    }
+
+    fun heartEye(hx: Float): Path {
+        val s = 5f
+        return Path().apply {
+            moveTo(hx, ey + s * 0.55f)
+            cubicTo(hx - s * 1.15f, ey + s * 0.15f, hx - s, ey - s * 0.65f, hx - s * 0.3f, ey - s * 0.8f)
+            cubicTo(hx - s * 0.05f, ey - s * 0.95f, hx + s * 0.05f, ey - s * 0.95f, hx + s * 0.3f, ey - s * 0.8f)
+            cubicTo(hx + s, ey - s * 0.65f, hx + s * 1.15f, ey + s * 0.15f, hx, ey + s * 0.55f)
+            close()
+        }
+    }
+
+    when (eye) {
+        "dot" -> {
+            drawCircle(FEATURE, radius = 3.5f, center = Offset(lx, ey))
+            drawCircle(FEATURE, radius = 3.5f, center = Offset(rx, ey))
+        }
+        "wink" -> {
+            drawPath(arcEye(lx), FEATURE, style = stroke)
+            drawLine(FEATURE, Offset(rx - 6f, ey), Offset(rx + 6f, ey), strokeWidth = 3.2f, cap = StrokeCap.Round)
+        }
+        "star" -> {
+            drawLine(FEATURE, Offset(lx - 4f, ey - 4f), Offset(lx + 4f, ey + 5f), strokeWidth = 2.8f, cap = StrokeCap.Round)
+            drawLine(FEATURE, Offset(lx + 4f, ey - 4f), Offset(lx - 4f, ey + 5f), strokeWidth = 2.8f, cap = StrokeCap.Round)
+            drawLine(FEATURE, Offset(rx - 4f, ey - 4f), Offset(rx + 4f, ey + 5f), strokeWidth = 2.8f, cap = StrokeCap.Round)
+            drawLine(FEATURE, Offset(rx + 4f, ey - 4f), Offset(rx - 4f, ey + 5f), strokeWidth = 2.8f, cap = StrokeCap.Round)
+        }
+        "heart" -> {
+            drawPath(heartEye(lx), Color(0xFFFF6B9D))
+            drawPath(heartEye(rx), Color(0xFFFF6B9D))
+        }
+        else -> { // "arc" (기본)
+            drawPath(arcEye(lx), FEATURE, style = stroke)
+            drawPath(arcEye(rx), FEATURE, style = stroke)
+        }
+    }
+}
+
+// ─── 입 스타일 ────────────────────────────────────────────────
+private fun DrawScope.drawMouth(mouth: String) {
+    val stroke = Stroke(width = 2.8f, cap = StrokeCap.Round)
+    when (mouth) {
+        "open" -> {
+            // 벌린 입
+            val path = Path().apply {
+                moveTo(50f, 91f); cubicTo(55f, 101f, 65f, 101f, 70f, 91f); close()
+            }
+            drawPath(path, Color(0xFF1F2A28))
+            drawPath(path, Color(0xFFFF8FAB).copy(alpha = 0.5f))
+        }
+        "flat" -> {
+            drawLine(FEATURE, Offset(52f, 94f), Offset(68f, 94f), strokeWidth = 2.8f, cap = StrokeCap.Round)
+        }
+        "sad" -> {
+            val path = Path().apply { moveTo(50f, 97f); cubicTo(55f, 89f, 65f, 89f, 70f, 97f) }
+            drawPath(path, FEATURE, style = stroke)
+        }
+        else -> { // "smile" (기본)
+            val path = Path().apply { moveTo(50f, 91f); cubicTo(55f, 99f, 65f, 99f, 70f, 91f) }
+            drawPath(path, FEATURE, style = stroke)
+        }
+    }
 }
 
 // ─── 헤어 악세서리 드로잉 ────────────────────────────────────

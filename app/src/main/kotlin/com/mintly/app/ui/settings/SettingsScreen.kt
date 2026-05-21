@@ -15,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -75,7 +74,7 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(거지방Colors.Gray50)
+                .background(Color.White)
                 .verticalScroll(rememberScrollState()),
         ) {
 
@@ -83,51 +82,47 @@ fun SettingsScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(거지방Colors.Mint100, 거지방Colors.Gray50)
-                        )
-                    )
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 24.dp, bottom = 28.dp),
+                    .background(Color(0xFFEAF8F5))
+                    .padding(horizontal = 32.dp, vertical = 32.dp),
             ) {
                 state.profile?.let { profile ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(22.dp),
                     ) {
-                        Box {
+                        Box(
+                            modifier = Modifier
+                                .size(116.dp)
+                                .clip(CircleShape)
+                                .background(Color.White),
+                            contentAlignment = Alignment.Center,
+                        ) {
                             거지방Avatar(
-                                size   = 72.dp,
+                                size   = 82.dp,
                                 color  = profile.avatarColor,
                                 face   = profile.avatarFace.toAvatarFace(),
                                 hat    = if (profile.hasCrownUntil != null) "crown" else profile.currentHat,
                                 outfit = profile.forcedOutfit ?: profile.currentOutfit,
                                 forced = profile.forcedOutfit != null,
                             )
-                            if (profile.hasCrownUntil != null) {
-                                Text("👑", fontSize = 14.sp, modifier = Modifier.align(Alignment.TopEnd))
-                            }
                         }
                         Column(
                             modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
                             Text(
-                                profile.displayName,
+                                profile.displayName.ifBlank { profile.username.ifBlank { "사용자" } },
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = 거지방Colors.Gray900,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Black,
                             )
-                            Text("@${profile.username}", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray500)
-                            Spacer(Modifier.height(2.dp))
-                            CoinChip(amount = profile.coins)
                         }
+                        SettingsCoinChip(amount = profile.coins)
                     }
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(28.dp))
 
             // ─── 정보 ───────────────────────────────────────────
             SettingsGroupLabel("정보")
@@ -137,64 +132,64 @@ fun SettingsScreen(
                     iconBg    = 거지방Colors.Mint100,
                     iconColor = 거지방Colors.Mint600,
                     title     = "프로필 수정",
-                    subtitle  = state.profile?.displayName,
+                    subtitle  = "닉네임",
                     onClick   = { showEditName = true },
                 )
                 RowDivider()
                 SettingsRow(
                     icon      = Icons.Rounded.Lock,
-                    iconBg    = Color(0xFFE8F0FE),
-                    iconColor = Color(0xFF3F6BB3),
+                    iconBg    = 거지방Colors.Mint100,
+                    iconColor = 거지방Colors.Mint600,
                     title     = "개인정보 수정",
                     subtitle  = "비밀번호, 이메일",
                     onClick   = { showPersonalInfo = true },
                 )
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(28.dp))
 
             // ─── 소셜 ───────────────────────────────────────────
             SettingsGroupLabel("소셜")
             SettingsCard {
                 SettingsRow(
-                    icon      = Icons.Rounded.Add,
+                    icon      = Icons.Rounded.MeetingRoom,
                     iconBg    = 거지방Colors.Mint100,
                     iconColor = 거지방Colors.Mint600,
                     title     = "방 만들기",
-                    subtitle  = "새로운 거지방을 만들어요",
+                    subtitle  = "초대 코드 생성",
                     onClick   = { showCreateRoom = true },
                 )
                 RowDivider()
                 SettingsRow(
-                    icon      = Icons.Rounded.Login,
+                    icon      = Icons.Rounded.QrCode2,
                     iconBg    = 거지방Colors.Mint100,
                     iconColor = 거지방Colors.Mint600,
                     title     = "방 참여하기",
-                    subtitle  = "초대 코드로 방에 들어가요",
+                    subtitle  = "초대 코드 입력",
                     onClick   = { showJoinRoom = true },
                 )
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(28.dp))
 
             // ─── 가계부 설정 ────────────────────────────────────
             SettingsGroupLabel("가계부 설정")
             SettingsCard {
                 SettingsRow(
                     icon      = Icons.Rounded.Star,
-                    iconBg    = Color(0xFFFFF8E7),
-                    iconColor = 거지방Colors.Coin,
+                    iconBg    = 거지방Colors.Mint100,
+                    iconColor = 거지방Colors.Mint600,
                     title     = "즐겨찾기",
-                    subtitle  = "자주 사용하는 소비 항목 관리",
+                    subtitle  = "자주 사용하는 항목",
                     onClick   = { showFavorites = true },
                 )
                 RowDivider()
                 SettingsRow(
                     icon      = Icons.Rounded.Category,
-                    iconBg    = Color(0xFFEDE7F6),
-                    iconColor = Color(0xFF7B1FA2),
+                    iconBg    = 거지방Colors.Mint100,
+                    iconColor = 거지방Colors.Mint600,
                     title     = "카테고리",
-                    subtitle  = "사용자 정의 카테고리 관리",
+                    subtitle  = "수입/지출 항목 관리",
                     onClick   = { showCategories = true },
                 )
                 RowDivider()
@@ -203,42 +198,33 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { showSpendingAlert = true }
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                        .padding(horizontal = 24.dp, vertical = 20.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(18.dp),
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFFFFF3E0)),
+                        modifier = Modifier.size(50.dp).clip(CircleShape).background(거지방Colors.Mint100.copy(alpha = 0.72f)),
                     ) {
-                        Icon(Icons.Rounded.NotificationsActive, null, tint = Color(0xFFFF8F00), modifier = Modifier.size(24.dp))
+                        Icon(Icons.Rounded.NotificationsActive, null, tint = 거지방Colors.Mint600.copy(alpha = 0.72f), modifier = Modifier.size(23.dp))
                     }
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("과소비 알람", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = 거지방Colors.Gray900)
+                        Text("과소비 알람 설정", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = Color.Black)
                         Text(
                             if (alertEnabled && alertAmount.isNotBlank())
-                                "월 ${"%,d".format(alertAmount.toLongOrNull() ?: 0L)}원 초과 시 알림"
+                                "%,d원 초과 알림".format(alertAmount.toLongOrNull() ?: 0L)
                             else if (alertEnabled) "켜짐" else "꺼짐",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (alertEnabled) 거지방Colors.Mint500 else 거지방Colors.Gray400,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = 거지방Colors.Gray500,
                         )
                     }
-                    Switch(
-                        checked = alertEnabled,
-                        onCheckedChange = { alertEnabled = it; if (it) showSpendingAlert = true },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor   = Color.White,
-                            checkedTrackColor   = 거지방Colors.Mint400,
-                            uncheckedThumbColor = Color.White,
-                            uncheckedTrackColor = 거지방Colors.Gray300,
-                        ),
-                    )
+                    Icon(Icons.Rounded.KeyboardArrowRight, null, tint = 거지방Colors.Gray400, modifier = Modifier.size(30.dp))
                 }
                 RowDivider()
                 SettingsRow(
                     icon      = Icons.Rounded.Share,
-                    iconBg    = Color(0xFFEDE7F6),
-                    iconColor = Color(0xFF7B1FA2),
+                    iconBg    = 거지방Colors.Mint100,
+                    iconColor = 거지방Colors.Mint600,
                     title     = "지출 범위 공유",
                     subtitle  = when (state.profile?.shareMode) {
                         "percent" -> "퍼센트로 공유"
@@ -249,7 +235,7 @@ fun SettingsScreen(
                 )
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(28.dp))
 
             // ─── 기타 ───────────────────────────────────────────
             SettingsGroupLabel("기타")
@@ -390,22 +376,45 @@ fun SettingsScreen(
 private fun SettingsGroupLabel(text: String) {
     Text(
         text      = text,
-        modifier  = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
-        style     = MaterialTheme.typography.labelMedium,
-        color     = 거지방Colors.Gray400,
+        modifier  = Modifier.padding(horizontal = 36.dp, vertical = 8.dp),
+        style     = MaterialTheme.typography.titleSmall,
+        color     = 거지방Colors.Gray500,
         fontWeight = FontWeight.SemiBold,
-        letterSpacing = 0.5.sp,
     )
+}
+
+@Composable
+private fun SettingsCoinChip(amount: Int) {
+    Surface(
+        shape = ShapePill,
+        color = Color(0xFFFFF8E7),
+        border = BorderStroke(1.dp, Color(0xFFEFD088)),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 13.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(
+                modifier = Modifier.size(30.dp).clip(CircleShape).background(거지방Colors.Coin),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("₩", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+            Text("%,d".format(amount), style = MaterialTheme.typography.titleSmall, color = 거지방Colors.CoinDark, fontWeight = FontWeight.SemiBold)
+        }
+    }
 }
 
 @Composable
 private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
     Surface(
-        modifier        = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        shape           = Shape14,
+        modifier        = Modifier.fillMaxWidth().padding(horizontal = 32.dp),
+        shape           = Shape20,
         color           = Color.White,
         tonalElevation  = 0.dp,
-        shadowElevation = 0.5.dp,
+        shadowElevation = 1.dp,
+        border          = BorderStroke(1.dp, 거지방Colors.Gray100),
     ) {
         Column(content = content)
     }
@@ -414,7 +423,7 @@ private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 private fun RowDivider() {
     HorizontalDivider(
-        modifier  = Modifier.padding(start = 84.dp),
+        modifier  = Modifier.padding(start = 86.dp),
         color     = 거지방Colors.Gray100,
         thickness = 0.5.dp,
     )
@@ -435,24 +444,25 @@ private fun SettingsRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .padding(horizontal = 22.dp, vertical = if (titleColor == 거지방Colors.Danger) 14.dp else 17.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.size(48.dp).clip(CircleShape).background(iconBg),
+            modifier = Modifier.size(if (titleColor == 거지방Colors.Danger) 44.dp else 50.dp).clip(CircleShape).background(iconBg.copy(alpha = 0.72f)),
         ) {
-            Icon(icon, null, tint = iconColor, modifier = Modifier.size(24.dp))
+            Icon(icon, null, tint = iconColor.copy(alpha = 0.72f), modifier = Modifier.size(if (titleColor == 거지방Colors.Danger) 21.dp else 23.dp))
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = titleColor)
             if (subtitle != null) {
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray400)
+                Spacer(Modifier.height(3.dp))
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray500)
             }
         }
         if (showArrow) {
-            Icon(Icons.Rounded.ChevronRight, null, tint = 거지방Colors.Gray300, modifier = Modifier.size(20.dp))
+            Icon(Icons.Rounded.ChevronRight, null, tint = 거지방Colors.Gray300, modifier = Modifier.size(30.dp))
         }
     }
 }

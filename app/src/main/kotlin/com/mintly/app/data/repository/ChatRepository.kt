@@ -13,7 +13,8 @@ import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.postgresChangeFlow
 import io.github.jan.supabase.realtime.PostgresAction
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flow
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -50,24 +51,25 @@ class ChatRepository @Inject constructor(
             .reversed()
     }.getOrElse { emptyList() }
 
-    suspend fun sendMessage(roomId: String, content: String): Result<ChatMessage> = runCatching {
+    suspend fun sendMessage(roomId: String, content: String): Result<Unit> = runCatching {
         val uid = client.auth.currentUserOrNull()?.id ?: error("Not logged in")
         client.from("chat_messages")
             .insert(mapOf("room_id" to roomId, "user_id" to uid, "content" to content))
-            .decodeSingle<ChatMessage>()
     }
 
-    fun messageFlow(roomId: String): Flow<ChatMessage> {
+    fun messageFlow(roomId: String): Flow<ChatMessage> = flow {
         val channel = client.channel("chat-$roomId")
-        return channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
+        val msgJson = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+        val changeFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
             table = "chat_messages"
             filter(FilterOperation("room_id", FilterOperator.EQ, roomId))
-        }.map { action ->
-            try {
-                kotlinx.serialization.json.Json.decodeFromString<ChatMessage>(action.record.toString())
-            } catch (e: Exception) {
-                ChatMessage(roomId = roomId, content = "")
-            }
+        }
+        channel.subscribe()
+        changeFlow.collect { action ->
+            val msg = runCatching {
+                msgJson.decodeFromString<ChatMessage>(action.record.toString())
+            }.getOrNull()
+            if (msg != null && msg.content.isNotBlank()) emit(msg)
         }
     }
 }
