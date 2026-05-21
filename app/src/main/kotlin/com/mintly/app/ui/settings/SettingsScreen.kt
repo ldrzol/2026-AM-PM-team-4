@@ -181,51 +181,6 @@ fun SettingsScreen(
                 )
             }
 
-            // 참여 중인 방 목록
-            if (state.groups.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                SettingsGroupLabel("참여 중인 방 (${state.groups.size})")
-                SettingsCard {
-                    state.groups.forEachIndexed { i, group ->
-                        if (i > 0) RowDivider()
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier.size(48.dp).clip(CircleShape).background(거지방Colors.Mint50),
-                            ) { Text(group.emoji, fontSize = 22.sp) }
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    group.name,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = 거지방Colors.Gray900,
-                                )
-                                Text("초대 코드: ${group.inviteCode}", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray500)
-                            }
-                            Surface(
-                                shape = ShapePill,
-                                color = 거지방Colors.Mint50,
-                                border = BorderStroke(1.dp, 거지방Colors.Mint200),
-                            ) {
-                                Text(
-                                    group.inviteCode,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = 거지방Colors.Mint700,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
             Spacer(Modifier.height(8.dp))
 
             // ─── 가계부 설정 ────────────────────────────────────
