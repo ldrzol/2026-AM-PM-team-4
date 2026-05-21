@@ -6,6 +6,7 @@ import com.mintly.app.data.model.Profile
 import com.mintly.app.data.model.RankedMember
 import com.mintly.app.data.supabase.SupabaseManager
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.FilterOperation
@@ -16,10 +17,21 @@ import io.github.jan.supabase.realtime.postgresChangeFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
+
+@Serializable
+private data class MemberSpending(
+    @SerialName("user_id")       val userId: String,
+    @SerialName("spent_amount")  val spentAmount: Long,
+    @SerialName("income_amount") val incomeAmount: Long,
+)
 
 @Singleton
 class RankingRepository @Inject constructor(
@@ -46,21 +58,20 @@ class RankingRepository @Inject constructor(
                 .decodeList<DailyRanking>()
 
             if (rankings.isNotEmpty()) {
+                // RPC로 수입도 한 번에 조회 (RLS 우회)
+                val spendingMap = runCatching {
+                    client.postgrest
+                        .rpc("get_group_daily_spending", buildJsonObject {
+                            put("p_group_id", groupId)
+                            put("p_date",     date)
+                        })
+                        .decodeList<MemberSpending>()
+                        .associateBy { it.userId }
+                }.getOrElse { emptyMap() }
+
                 rankings.mapNotNull { r ->
                     val profile = r.profile ?: return@mapNotNull null
-                    val income = runCatching {
-                        client.from("transactions")
-                            .select(Columns.raw("amount")) {
-                                filter {
-                                    eq("user_id",     r.userId)
-                                    eq("group_id",    groupId)
-                                    eq("occurred_on", date)
-                                    eq("kind",        "income")
-                                }
-                            }
-                            .decodeList<Map<String, Int>>()
-                            .sumOf { it["amount"] ?: 0 }
-                    }.getOrElse { 0 }
+                    val income  = spendingMap[r.userId]?.incomeAmount?.toInt() ?: 0
                     val sv = buildShareValue(r.spentAmount, income)
                     RankedMember(profile, r.spentAmount, income, r.rank, r.isWinner, r.isLoser, sv)
                 }
@@ -83,38 +94,23 @@ class RankingRepository @Inject constructor(
                 .decodeList<GroupMember>()
         }.getOrElse { emptyList() }
 
+        // RPC로 모든 멤버 지출/수입 한 번에 조회 (security definer → RLS 우회)
+        val spendingMap = runCatching {
+            client.postgrest
+                .rpc("get_group_daily_spending", buildJsonObject {
+                    put("p_group_id", groupId)
+                    put("p_date",     date)
+                })
+                .decodeList<MemberSpending>()
+                .associateBy { it.userId }
+        }.getOrElse { emptyMap() }
+
         data class MemberSpend(val profile: Profile, val spent: Int, val income: Int)
 
         val spendList = members.mapNotNull { member ->
-            val profile = member.profile ?: return@mapNotNull null
-
-            val spent = runCatching {
-                client.from("transactions")
-                    .select(Columns.raw("amount")) {
-                        filter {
-                            eq("user_id",     profile.id)
-                            eq("occurred_on", date)
-                            eq("kind",        "expense")
-                        }
-                    }
-                    .decodeList<Map<String, Int>>()
-                    .sumOf { it["amount"] ?: 0 }
-            }.getOrElse { 0 }
-
-            val income = runCatching {
-                client.from("transactions")
-                    .select(Columns.raw("amount")) {
-                        filter {
-                            eq("user_id",     profile.id)
-                            eq("occurred_on", date)
-                            eq("kind",        "income")
-                        }
-                    }
-                    .decodeList<Map<String, Int>>()
-                    .sumOf { it["amount"] ?: 0 }
-            }.getOrElse { 0 }
-
-            MemberSpend(profile, spent, income)
+            val profile  = member.profile ?: return@mapNotNull null
+            val spending = spendingMap[profile.id]
+            MemberSpend(profile, spending?.spentAmount?.toInt() ?: 0, spending?.incomeAmount?.toInt() ?: 0)
         }
 
         // 수입·지출 모두 입력한 멤버만 순위에 포함, 나머지는 미입력으로 표시
