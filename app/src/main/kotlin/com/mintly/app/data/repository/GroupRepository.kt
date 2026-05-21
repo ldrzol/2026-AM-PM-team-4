@@ -5,9 +5,14 @@ import com.mintly.app.data.model.GroupMember
 import com.mintly.app.data.supabase.SupabaseManager
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import kotlinx.serialization.Serializable
 import javax.inject.Inject
 import javax.inject.Singleton
+
+@Serializable
+private data class InviteCodeParams(val p_code: String)
 
 @Singleton
 class GroupRepository @Inject constructor(
@@ -68,8 +73,9 @@ class GroupRepository @Inject constructor(
 
     suspend fun joinGroup(inviteCode: String): Result<FriendGroup> = runCatching {
         val uid = client.auth.currentUserOrNull()?.id ?: error("Not logged in")
-        val group = client.from("friend_groups")
-            .select { filter { eq("invite_code", inviteCode.uppercase()) } }
+        // SECURITY DEFINER RPC 사용 → 아직 멤버가 아닌 경우에도 invite_code로 조회 가능
+        val group = client.postgrest
+            .rpc("find_group_by_invite_code", InviteCodeParams(inviteCode.uppercase()))
             .decodeSingleOrNull<FriendGroup>() ?: error("방을 찾을 수 없습니다")
         client.from("group_members").insert(
             mapOf("group_id" to group.id, "user_id" to uid)
