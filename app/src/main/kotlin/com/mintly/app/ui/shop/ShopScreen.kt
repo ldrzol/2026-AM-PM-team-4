@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -151,30 +150,14 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
         // ── 룰렛 휠 ─────────────────────────────────────────
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.size(300.dp),
+            modifier = Modifier.size(280.dp),
         ) {
-            // 외부 그림자 링
-            Canvas(modifier = Modifier.size(300.dp)) {
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(Color(0x2000C896), Color(0x0000C896)),
-                        radius = size.minDimension / 2f,
-                    ),
-                    radius = size.minDimension / 2f,
-                )
+            // 베젤 링
+            Canvas(modifier = Modifier.size(280.dp)) {
+                drawCircle(color = Color(0xFFDDDDDD), radius = size.minDimension / 2f)
             }
 
-            // 베젤 링 (Toss 느낌의 두꺼운 테두리)
-            Canvas(modifier = Modifier.size(284.dp)) {
-                drawCircle(
-                    brush = Brush.linearGradient(
-                        colors = listOf(Color(0xFFE0E0E0), Color(0xFFF8F8F8), Color(0xFFD0D0D0)),
-                    ),
-                    radius = size.minDimension / 2f,
-                )
-            }
-
-            // 휠 본체
+            // 휠 본체 (단색 슬라이스)
             Canvas(
                 modifier = Modifier
                     .size(260.dp)
@@ -187,29 +170,13 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
 
                 segments.forEachIndexed { i, seg ->
                     val startAngle = i * sweepAngle - 90f
-                    val baseColor = Color(seg.color)
-                    // 각 슬라이스: 밝은 쪽 → 어두운 쪽 방사형 그라디언트 (입체감)
-                    val lightColor = baseColor.copy(
-                        red   = (baseColor.red   * 1.15f).coerceAtMost(1f),
-                        green = (baseColor.green * 1.15f).coerceAtMost(1f),
-                        blue  = (baseColor.blue  * 1.15f).coerceAtMost(1f),
-                    )
-                    val darkColor = baseColor.copy(
-                        red   = (baseColor.red   * 0.82f),
-                        green = (baseColor.green * 0.82f),
-                        blue  = (baseColor.blue  * 0.82f),
-                    )
                     drawArc(
-                        brush = Brush.radialGradient(
-                            colors = listOf(lightColor, darkColor),
-                            center = center,
-                            radius = radius,
-                        ),
+                        color = Color(seg.color),
                         startAngle = startAngle,
                         sweepAngle = sweepAngle,
                         useCenter = true,
                     )
-                    // 슬라이스 간 흰 선
+                    // 슬라이스 구분선
                     drawArc(
                         color = Color.White,
                         startAngle = startAngle,
@@ -218,20 +185,11 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
                         style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3f),
                     )
                 }
-
-                // 중앙 허브 (입체 느낌)
+                // 중앙 허브
+                drawCircle(color = Color.White, radius = radius * 0.17f, center = center)
                 drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(Color.White, Color(0xFFE0E0E0)),
-                        center = center,
-                        radius = radius * 0.18f,
-                    ),
-                    radius = radius * 0.18f,
-                    center = center,
-                )
-                drawCircle(
-                    color = Color(0xFFCCCCCC),
-                    radius = radius * 0.18f,
+                    color = Color(0xFFDDDDDD),
+                    radius = radius * 0.17f,
                     center = center,
                     style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f),
                 )
@@ -243,10 +201,10 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
             segments.forEachIndexed { i, seg ->
                 val angleDeg = i * sweepAngle + sweepAngle / 2 - 90 + rotation.value
                 val angleRad = Math.toRadians(angleDeg.toDouble())
-                val r = 82f
+                val r = 80f
                 Box(
                     modifier = Modifier
-                        .size(300.dp)
+                        .size(280.dp)
                         .offset(
                             x = (cos(angleRad) * r).dp,
                             y = (sin(angleRad) * r).dp,
@@ -266,29 +224,15 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
                 }
             }
 
-            // 포인터 (세련된 삼각형 + 그림자)
-            Box(
+            // 포인터
+            Text(
+                "▼",
+                fontSize = 26.sp,
+                color = 거지방Colors.Mint400,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .offset(y = (-4).dp),
-            ) {
-                Canvas(modifier = Modifier.size(width = 24.dp, height = 32.dp)) {
-                    val path = androidx.compose.ui.graphics.Path().apply {
-                        moveTo(size.width / 2f, size.height)
-                        lineTo(0f, 0f)
-                        lineTo(size.width, 0f)
-                        close()
-                    }
-                    // 그림자
-                    drawPath(path, color = Color(0x40000000), style = androidx.compose.ui.graphics.drawscope.Fill)
-                    drawPath(
-                        path,
-                        brush = Brush.linearGradient(
-                            colors = listOf(Color(0xFF00D49B), Color(0xFF00A87A)),
-                        ),
-                    )
-                }
-            }
+                    .offset(y = (-10).dp),
+            )
         }
 
         // ── 스핀 버튼 ────────────────────────────────────────

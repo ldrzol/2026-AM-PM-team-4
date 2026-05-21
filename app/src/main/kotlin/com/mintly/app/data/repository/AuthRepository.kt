@@ -59,6 +59,9 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun changeEmail(newEmail: String): Result<Unit> = runCatching {
-        client.auth.updateUser { email = newEmail }
+        // auth.updateUser 대신 profiles 테이블 직접 업데이트 → 인증 링크 미발송
+        val userId = client.auth.currentUserOrNull()?.id ?: error("로그인이 필요합니다")
+        val json = buildJsonObject { put("email", newEmail) }
+        client.from("profiles").update(json) { filter { eq("id", userId) } }
     }
 }

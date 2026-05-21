@@ -12,6 +12,7 @@ data class Profile(
     @SerialName("avatar_seed")  val avatarSeed: String = "default",
     @SerialName("avatar_color") val avatarColor: String = "mint",
     @SerialName("avatar_face")  val avatarFace: Map<String, String> = emptyMap(),
+    val email: String? = null,
     val coins: Int = 0,
     val phone: String? = null,
     @SerialName("current_hat")     val currentHat: String? = null,
@@ -161,14 +162,14 @@ data class RouletteSegment(
 )
 
 val DEFAULT_ROULETTE_SEGMENTS = listOf(
-    RouletteSegment("r1", "코인 30",  "🪙", 0xFF74BBAE, "coins",   "30"),
-    RouletteSegment("r2", "코인 100", "🪙", 0xFFE8B547, "coins",   "100"),
-    RouletteSegment("r3", "코인 50",  "🪙", 0xFFE5896B, "coins",   "50"),
-    RouletteSegment("r4", "코인 10",  "🪙", 0xFFFFD93D, "coins",   "10"),
-    RouletteSegment("r5", "코인 200", "💰", 0xFF6BA3D6, "coins",   "200"),
-    RouletteSegment("r6", "코인 500", "🏆", 0xFF9C7DD9, "coins",   "500"),
-    RouletteSegment("r7", "코인 20",  "🪙", 0xFFFFA3B8, "coins",   "20"),
-    RouletteSegment("r8", "꽝",      "💨", 0xFFA8AFB5, "nothing", "0"),
+    RouletteSegment("r1", "코인 30",  "🪙", 0xFF3B82F6, "coins",   "30"),
+    RouletteSegment("r2", "코인 100", "🪙", 0xFF10B981, "coins",   "100"),
+    RouletteSegment("r3", "코인 50",  "🪙", 0xFFF59E0B, "coins",   "50"),
+    RouletteSegment("r4", "코인 10",  "🪙", 0xFFEC4899, "coins",   "10"),
+    RouletteSegment("r5", "코인 200", "💰", 0xFF8B5CF6, "coins",   "200"),
+    RouletteSegment("r6", "코인 500", "🏆", 0xFFEF4444, "coins",   "500"),
+    RouletteSegment("r7", "코인 20",  "🪙", 0xFF06B6D4, "coins",   "20"),
+    RouletteSegment("r8", "꽝",      "💨", 0xFF94A3B8, "nothing", "0"),
 )
 
 val DEFAULT_COSTUMES = listOf(
