@@ -21,12 +21,14 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Supabase 키는 local.properties에 설정
+        // Supabase 키: local.properties 우선, 없으면 기본값 사용
         val localProps = Properties()
         val localPropsFile = rootProject.file("local.properties")
         if (localPropsFile.exists()) localPropsFile.inputStream().use { localProps.load(it) }
-        buildConfigField("String", "SUPABASE_URL",      "\"${localProps.getProperty("SUPABASE_URL", "")}\"")
-        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProps.getProperty("SUPABASE_ANON_KEY", "")}\"")
+        val supabaseUrl     = localProps.getProperty("SUPABASE_URL",      "https://dtnlnsdwadbqlucipfno.supabase.co")
+        val supabaseAnonKey = localProps.getProperty("SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0bmxuc2R3YWRicWx1Y2lwZm5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMzU3MzEsImV4cCI6MjA5NDcxMTczMX0.VnVxCOrD43FbQJtWHcyGGpMVhRlOHlSbbK-KzUiDKrM")
+        buildConfigField("String", "SUPABASE_URL",      "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
     }
 
     buildTypes {
