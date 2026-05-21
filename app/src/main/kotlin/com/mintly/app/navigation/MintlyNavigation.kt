@@ -145,7 +145,7 @@ fun MainScaffold(onLogout: () -> Unit) {
                         label = {
                             Text(
                                 text = tab.label,
-                                fontSize = 12.sp,
+                                fontSize = 14.sp,
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(

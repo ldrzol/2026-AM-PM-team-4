@@ -61,7 +61,7 @@ fun ShopScreen(vm: ShopViewModel = hiltViewModel()) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("샵", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text("샵", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CoinChip(amount = state.coins)
                 TicketChip(count = state.ticketCount)
@@ -90,7 +90,7 @@ fun ShopScreen(vm: ShopViewModel = hiltViewModel()) {
                 ) {
                     Text(
                         label,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
                         color = if (active) 거지방Colors.Mint700 else 거지방Colors.Gray500,
                     )
@@ -243,11 +243,11 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
         // 보상 목록
         Surface(shape = Shape20, color = 거지방Colors.Gray50, border = BorderStroke(1.dp, 거지방Colors.Gray200)) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("보상 목록", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Gray500)
+                Text("보상 목록", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray500)
                 DEFAULT_ROULETTE_SEGMENTS.forEach { seg ->
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(seg.emoji, fontSize = 18.sp)
-                        Text(seg.label, style = MaterialTheme.typography.bodyMedium)
+                        Text(seg.label, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }
@@ -269,7 +269,7 @@ private fun CostumeStoreTab(state: ShopUiState, onBuy: (Costume) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (hats.isNotEmpty()) {
-            Text("모자", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text("모자", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 modifier = Modifier.height(((hats.size / 3 + 1) * 130).dp),
@@ -289,7 +289,7 @@ private fun CostumeStoreTab(state: ShopUiState, onBuy: (Costume) -> Unit) {
         }
 
         if (outfits.isNotEmpty()) {
-            Text("옷", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text("옷", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 modifier = Modifier.height(((outfits.size / 3 + 1) * 130).dp),
@@ -332,14 +332,14 @@ private fun CostumeCard(costume: Costume, owned: Boolean, coins: Int, onBuy: () 
             Text(costume.icon, fontSize = 28.sp)
             Text(
                 costume.name,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.bodySmall,
                 color = 거지방Colors.Gray800,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
             )
             RarityBadge(costume.rarity)
             if (owned) {
-                Text("보유중", style = MaterialTheme.typography.labelSmall, color = 거지방Colors.Mint600,
+                Text("보유중", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Mint600,
                     fontWeight = FontWeight.Bold)
             } else {
                 Surface(
@@ -349,7 +349,7 @@ private fun CostumeCard(costume: Costume, owned: Boolean, coins: Int, onBuy: () 
                 ) {
                     Text(
                         "🪙 ${costume.price}",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.bodySmall,
                         color = if (canAfford) Color.White else 거지방Colors.Gray500,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -373,7 +373,7 @@ private fun SpinResultDialog(result: RouletteSegment, onDismiss: () -> Unit) {
                 Text("🎉", fontSize = 48.sp)
                 Text(
                     result.label,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(

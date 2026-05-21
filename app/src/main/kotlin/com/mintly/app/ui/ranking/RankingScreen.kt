@@ -79,11 +79,11 @@ fun RankingScreen(vm: RankingViewModel = hiltViewModel()) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column {
-                    Text("랭킹", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("랭킹", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     if (selectedGroup != null) {
                         Text(
                             "${selectedGroup.emoji} ${selectedGroup.name}",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = 거지방Colors.Gray400,
                         )
                     }
@@ -141,7 +141,7 @@ fun RankingScreen(vm: RankingViewModel = hiltViewModel()) {
                 ) {
                     Text(
                         "수입 대비 지출 % 기준  •  ${activeCount}명 입력",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.bodySmall,
                         color = 거지방Colors.Gray400,
                     )
                     Surface(
@@ -297,12 +297,12 @@ private fun InviteSheet(group: FriendGroup, onDismiss: () -> Unit) {
         ) {
             Text(
                 "${group.emoji} ${group.name}",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = 거지방Colors.Gray900,
             )
             Spacer(Modifier.height(4.dp))
-            Text("친구를 초대해보세요", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray500)
+            Text("친구를 초대해보세요", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray500)
 
             Spacer(Modifier.height(20.dp))
 
@@ -440,11 +440,11 @@ private fun RankRow(ranked: RankedMember, onClick: () -> Unit) {
                     ),
             ) {
                 when {
-                    isNotEntered     -> Text("─", fontSize = 12.sp, color = 거지방Colors.Gray400)
-                    ranked.rank == 1 -> Text("👑", fontSize = 16.sp)
+                    isNotEntered     -> Text("─", fontSize = 15.sp, color = 거지방Colors.Gray400)
+                    ranked.rank == 1 -> Text("👑", fontSize = 20.sp)
                     else             -> Text(
                         "${ranked.rank}",
-                        fontSize = 13.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (ranked.rank <= 3) Color.White else 거지방Colors.Gray600,
                     )
@@ -472,14 +472,14 @@ private fun RankRow(ranked: RankedMember, onClick: () -> Unit) {
             ) {
                 Text(
                     ranked.profile.displayName,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = if (isNotEntered) 거지방Colors.Gray400 else 거지방Colors.Gray900,
                 )
                 if (!isNotEntered) {
                     Text(
                         "지출 %,d원".format(ranked.spentAmount),
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = 거지방Colors.Expense.copy(alpha = 0.8f),
                     )
                 }
@@ -499,7 +499,7 @@ private fun RankRow(ranked: RankedMember, onClick: () -> Unit) {
                     ) {
                         Text(
                             "${pct}%",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.ExtraBold,
                             color = when {
                                 isFirst -> 거지방Colors.CoinDark
@@ -509,7 +509,7 @@ private fun RankRow(ranked: RankedMember, onClick: () -> Unit) {
                         )
                         Text(
                             "수입 대비",
-                            fontSize = 9.sp,
+                            fontSize = 12.sp,
                             color = 거지방Colors.Gray400,
                         )
                     }
@@ -524,7 +524,7 @@ private fun RankRow(ranked: RankedMember, onClick: () -> Unit) {
                     ) {
                         Text(
                             "미입력",
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.labelMedium,
                             color = 거지방Colors.Gray500,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
@@ -537,7 +537,7 @@ private fun RankRow(ranked: RankedMember, onClick: () -> Unit) {
                     ) {
                         Text(
                             "1등 🥇",
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.labelMedium,
                             color = 거지방Colors.CoinDark,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
@@ -550,7 +550,7 @@ private fun RankRow(ranked: RankedMember, onClick: () -> Unit) {
                     ) {
                         Text(
                             "꼴등 😅",
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.labelMedium,
                             color = 거지방Colors.RankLoserText,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
@@ -592,12 +592,12 @@ private fun FriendProfileDialog(
 
                 Text(
                     profile.displayName,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
                     "@${profile.username}",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = 거지방Colors.Gray500,
                 )
 
@@ -615,13 +615,13 @@ private fun FriendProfileDialog(
                         ) {
                             if (rankedMember.isNotEntered) {
                                 // 미입력
-                                Text("오늘 거래 없음", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Gray400)
+                                Text("오늘 거래 없음", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400)
                                 Text("─", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray300)
                             } else if (profile.shareMode == "percent") {
                                 val pct = if (rankedMember.incomeAmount > 0)
                                     (rankedMember.spentAmount.toDouble() / rankedMember.incomeAmount * 100).toInt()
                                 else null
-                                Text("수입 대비 지출", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Gray500)
+                                Text("수입 대비 지출", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray500)
                                 Text(
                                     if (pct != null) "${pct}%" else "수입 미기록",
                                     style = MaterialTheme.typography.titleLarge,
@@ -631,13 +631,13 @@ private fun FriendProfileDialog(
                                 if (pct != null) {
                                     Text(
                                         "수입 %,d원 → 지출 %,d원".format(rankedMember.incomeAmount, rankedMember.spentAmount),
-                                        style = MaterialTheme.typography.bodySmall,
+                                        style = MaterialTheme.typography.bodyMedium,
                                         color = 거지방Colors.Gray400,
                                     )
                                 } else if (rankedMember.spentAmount > 0) {
                                     Text(
                                         "지출 %,d원".format(rankedMember.spentAmount),
-                                        style = MaterialTheme.typography.bodySmall,
+                                        style = MaterialTheme.typography.bodyMedium,
                                         color = 거지방Colors.Expense,
                                     )
                                 }
@@ -647,19 +647,19 @@ private fun FriendProfileDialog(
                                     horizontalArrangement = Arrangement.SpaceEvenly,
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text("수입", style = MaterialTheme.typography.labelSmall, color = 거지방Colors.Gray500)
+                                        Text("수입", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Gray500)
                                         Text(
                                             "+%,d원".format(rankedMember.incomeAmount),
-                                            style = MaterialTheme.typography.bodyMedium,
+                                            style = MaterialTheme.typography.bodyLarge,
                                             fontWeight = FontWeight.Bold,
                                             color = 거지방Colors.Income,
                                         )
                                     }
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text("지출", style = MaterialTheme.typography.labelSmall, color = 거지방Colors.Gray500)
+                                        Text("지출", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Gray500)
                                         Text(
                                             "-%,d원".format(rankedMember.spentAmount),
-                                            style = MaterialTheme.typography.bodyMedium,
+                                            style = MaterialTheme.typography.bodyLarge,
                                             fontWeight = FontWeight.Bold,
                                             color = 거지방Colors.Expense,
                                         )
@@ -669,7 +669,7 @@ private fun FriendProfileDialog(
                             if (!rankedMember.isNotEntered) {
                                 Text(
                                     "현재 ${rankedMember.rank}위",
-                                    style = MaterialTheme.typography.labelMedium,
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = 거지방Colors.Mint600,
                                 )
                             }

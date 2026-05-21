@@ -64,7 +64,7 @@ fun HomeScreen(vm: HomeViewModel = hiltViewModel()) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         "안녕하세요 👋",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.85f),
                     )
                     Text(
@@ -87,7 +87,7 @@ fun HomeScreen(vm: HomeViewModel = hiltViewModel()) {
                             Text("🪙", fontSize = 14.sp)
                             Text(
                                 "%,d".format(profile?.coins ?: 0),
-                                style = MaterialTheme.typography.labelMedium,
+                                style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
                             )
@@ -172,13 +172,13 @@ fun HomeScreen(vm: HomeViewModel = hiltViewModel()) {
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         profile?.displayName ?: "",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = 거지방Colors.Gray900,
                     )
                     Text(
                         "@${profile?.username ?: ""}",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = 거지방Colors.Gray400,
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -190,7 +190,7 @@ fun HomeScreen(vm: HomeViewModel = hiltViewModel()) {
                         ) {
                             Icon(Icons.Rounded.Edit, null, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("꾸미기", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Text("꾸미기", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                         }
                         OutlinedButton(
                             onClick = { showWardrobe = true },
@@ -200,7 +200,7 @@ fun HomeScreen(vm: HomeViewModel = hiltViewModel()) {
                         ) {
                             Icon(Icons.Rounded.Checkroom, null, modifier = Modifier.size(14.dp), tint = 거지방Colors.Mint500)
                             Spacer(Modifier.width(4.dp))
-                            Text("옷장", style = MaterialTheme.typography.labelSmall, color = 거지방Colors.Mint600, fontWeight = FontWeight.Bold)
+                            Text("옷장", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Mint600, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -224,11 +224,11 @@ fun HomeScreen(vm: HomeViewModel = hiltViewModel()) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("오늘의 소비", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray900)
+                    Text("오늘의 소비", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray900)
                     val net = state.todayIncome - state.todayExpense
                     Text(
                         if (net >= 0) "+%,d원".format(net) else "%,d원".format(net),
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = if (net >= 0) 거지방Colors.Income else 거지방Colors.Expense,
                         fontWeight = FontWeight.Bold,
                     )
@@ -259,10 +259,10 @@ fun HomeScreen(vm: HomeViewModel = hiltViewModel()) {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("이번 달 지출 분석", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray900)
+                        Text("이번 달 지출 분석", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray900)
                         Text(
                             "TOP ${minOf(state.monthlyStats.size, 5)}",
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.bodySmall,
                             color = 거지방Colors.Gray400,
                         )
                     }
@@ -308,10 +308,10 @@ private fun SummaryCard(
     val color = if (kind == "income") 거지방Colors.Income else 거지방Colors.Expense
     Surface(modifier = modifier, shape = Shape14, color = bg) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(label, style = MaterialTheme.typography.labelMedium, color = color.copy(alpha = 0.7f))
+            Text(label, style = MaterialTheme.typography.bodySmall, color = color.copy(alpha = 0.7f))
             Text(
                 text = "%,d원".format(amount),
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = color,
             )
@@ -332,10 +332,10 @@ private fun CategoryBarChart(stats: Map<Category, Int>) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(cat.name, style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray700)
+                    Text(cat.name, style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray700)
                     Text(
                         "%,d원".format(amount),
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = 거지방Colors.Gray600,
                         fontWeight = FontWeight.Medium,
                     )
@@ -375,7 +375,7 @@ private fun WardrobeBottomSheet(
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(modifier = Modifier.padding(20.dp).navigationBarsPadding()) {
-            Text("옷장", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("옷장", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
 
             // 탭
@@ -449,7 +449,7 @@ private fun CostumeItem(icon: String, name: String, selected: Boolean, onClick: 
             .padding(12.dp),
     ) {
         Text(icon, fontSize = 28.sp)
-        Text(name, style = MaterialTheme.typography.labelSmall, color = 거지방Colors.Gray700)
+        Text(name, style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray700)
     }
 }
 
@@ -493,7 +493,7 @@ private fun AvatarEditorBottomSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("아바타 꾸미기", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("아바타 꾸미기", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(onClick = onDismiss) { Text("취소", color = 거지방Colors.Gray500) }
                     Button(
@@ -536,7 +536,7 @@ private fun AvatarEditorBottomSheet(
                     ) {
                         Text(
                             label,
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
                             color = if (active) 거지방Colors.Mint700 else 거지방Colors.Gray500,
                         )
@@ -570,7 +570,7 @@ private fun AvatarEditorBottomSheet(
                         AvatarSelectorRow("뒷머리", backHairOpts.map { it.first to it.second }, face.backHair) { face = face.copy(backHair = it) }
                     }
                     "color" -> {
-                        Text("바디 색상", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Gray500, fontWeight = FontWeight.SemiBold)
+                        Text("바디 색상", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray500, fontWeight = FontWeight.SemiBold)
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             colorOpts.forEach { (id, name) ->
                                 val selected = color == id
@@ -592,7 +592,7 @@ private fun AvatarEditorBottomSheet(
                                                 modifier = Modifier.align(Alignment.Center).size(20.dp))
                                         }
                                     }
-                                    Text(name, style = MaterialTheme.typography.labelSmall, color = if (selected) 거지방Colors.Mint700 else 거지방Colors.Gray500, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+                                    Text(name, style = MaterialTheme.typography.bodySmall, color = if (selected) 거지방Colors.Mint700 else 거지방Colors.Gray500, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
                                 }
                             }
                         }
@@ -611,7 +611,7 @@ private fun AvatarSelectorRow(
     onSelect: (String) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Gray500, fontWeight = FontWeight.SemiBold)
+        Text(label, style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray500, fontWeight = FontWeight.SemiBold)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             items(options) { (id, name) ->
                 val isSelected = selected == id
@@ -624,7 +624,7 @@ private fun AvatarSelectorRow(
                     Text(
                         name,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = if (isSelected) 거지방Colors.Mint700 else 거지방Colors.Gray600,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     )

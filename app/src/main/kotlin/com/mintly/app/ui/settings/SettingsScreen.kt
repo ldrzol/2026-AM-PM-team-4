@@ -119,7 +119,7 @@ fun SettingsScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = 거지방Colors.Gray900,
                             )
-                            Text("@${profile.username}", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray500)
+                            Text("@${profile.username}", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray500)
                             Spacer(Modifier.height(2.dp))
                             CoinChip(amount = profile.coins)
                         }
@@ -219,7 +219,7 @@ fun SettingsScreen(
                             if (alertEnabled && alertAmount.isNotBlank())
                                 "월 ${"%,d".format(alertAmount.toLongOrNull() ?: 0L)}원 초과 시 알림"
                             else if (alertEnabled) "켜짐" else "꺼짐",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = if (alertEnabled) 거지방Colors.Mint500 else 거지방Colors.Gray400,
                         )
                     }
@@ -390,7 +390,7 @@ private fun SettingsGroupLabel(text: String) {
     Text(
         text      = text,
         modifier  = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
-        style     = MaterialTheme.typography.labelSmall,
+        style     = MaterialTheme.typography.labelMedium,
         color     = 거지방Colors.Gray400,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 0.5.sp,
@@ -447,7 +447,7 @@ private fun SettingsRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = titleColor)
             if (subtitle != null) {
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400)
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray400)
             }
         }
         if (showArrow) {
@@ -489,7 +489,7 @@ private fun PersonalInfoSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("개인정보 수정", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray900)
+                Text("개인정보 수정", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray900)
                 IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, null, tint = 거지방Colors.Gray400) }
             }
             HorizontalDivider(color = 거지방Colors.Gray100)
@@ -564,7 +564,7 @@ private fun ChangePasswordDialog(onSave: (String) -> Unit, onDismiss: () -> Unit
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(0xFFE8F0FE)),
                     ) { Icon(Icons.Rounded.Lock, null, tint = Color(0xFF3F6BB3), modifier = Modifier.size(20.dp)) }
-                    Text("비밀번호 변경", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("비밀번호 변경", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
                 OutlinedTextField(
                     value = newPw,
@@ -665,7 +665,7 @@ private fun FavoritesSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("즐겨찾기", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray900)
+                Text("즐겨찾기", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray900)
                 IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, null, tint = 거지방Colors.Gray400) }
             }
 
@@ -690,7 +690,7 @@ private fun FavoritesSheet(
                             .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = if (active) FontWeight.Bold else FontWeight.Normal, color = if (active) aColor else 거지방Colors.Gray500)
+                        Text(label, style = MaterialTheme.typography.bodyLarge, fontWeight = if (active) FontWeight.Bold else FontWeight.Normal, color = if (active) aColor else 거지방Colors.Gray500)
                     }
                 }
             }
@@ -761,7 +761,7 @@ private fun FavoriteListItem(fav: Favorite, accentColor: Color, onDelete: (Strin
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 fav.category?.name ?: "미분류",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = 거지방Colors.Gray900,
             )
@@ -770,7 +770,7 @@ private fun FavoriteListItem(fav: Favorite, accentColor: Color, onDelete: (Strin
                 fav.memo?.takeIf { it.isNotBlank() }?.let { if (isNotEmpty()) append(" · "); append(it) }
             }
             if (detail.isNotBlank()) {
-                Text(detail, style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400)
+                Text(detail, style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray400)
             }
         }
         IconButton(
@@ -808,7 +808,7 @@ private fun AddFavoriteDialog(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(0xFFFFF8E7)),
                     ) { Icon(Icons.Rounded.Star, null, tint = 거지방Colors.Coin, modifier = Modifier.size(20.dp)) }
-                    Text("즐겨찾기 추가", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("즐겨찾기 추가", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
                 Text(
                     if (kind == "expense") "지출 즐겨찾기" else "수입 즐겨찾기",
@@ -916,7 +916,7 @@ private fun CategoryManagementSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("카테고리", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray900)
+                Text("카테고리", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray900)
                 IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, null, tint = 거지방Colors.Gray400) }
             }
 
@@ -941,7 +941,7 @@ private fun CategoryManagementSheet(
                             .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = if (active) FontWeight.Bold else FontWeight.Normal, color = if (active) aColor else 거지방Colors.Gray500)
+                        Text(label, style = MaterialTheme.typography.bodyLarge, fontWeight = if (active) FontWeight.Bold else FontWeight.Normal, color = if (active) aColor else 거지방Colors.Gray500)
                     }
                 }
             }
@@ -1001,10 +1001,10 @@ private fun CategoryListItem(cat: Category, onDelete: ((String) -> Unit)?) {
             Text(getCategoryEmoji(cat.icon), fontSize = 20.sp)
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(cat.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = 거지방Colors.Gray900)
+            Text(cat.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = 거지방Colors.Gray900)
             Text(
                 if (cat.ownerId != null) "사용자 카테고리" else "기본 카테고리",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = if (cat.ownerId != null) 거지방Colors.Mint500 else 거지방Colors.Gray400,
             )
         }
@@ -1045,7 +1045,7 @@ private fun AddCategoryDialog(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(0xFFEDE7F6)),
                     ) { Icon(Icons.Rounded.Category, null, tint = Color(0xFF7B1FA2), modifier = Modifier.size(20.dp)) }
-                    Text("카테고리 추가", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("카테고리 추가", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
 
                 // 이름
@@ -1303,7 +1303,7 @@ private fun EditNameDialog(current: String, onSave: (String) -> Unit, onDismiss:
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.size(40.dp).clip(CircleShape).background(거지방Colors.Mint100),
                     ) { Icon(Icons.Rounded.Person, null, tint = 거지방Colors.Mint600, modifier = Modifier.size(20.dp)) }
-                    Text("닉네임 변경", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("닉네임 변경", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
                 거지방TextField(value = name, onValueChange = { name = it }, label = "새 닉네임")
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1341,7 +1341,7 @@ private fun CreateRoomDialog(onCreate: (String, String) -> Unit, onDismiss: () -
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.size(40.dp).clip(CircleShape).background(거지방Colors.Mint100),
                     ) { Icon(Icons.Rounded.Add, null, tint = 거지방Colors.Mint600, modifier = Modifier.size(20.dp)) }
-                    Text("방 만들기", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("방 만들기", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
                 거지방TextField(value = name, onValueChange = { name = it }, label = "방 이름")
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1360,7 +1360,7 @@ private fun CreateRoomDialog(onCreate: (String, String) -> Unit, onDismiss: () -
                         }
                     }
                 }
-                Text("초대 코드는 자동으로 생성됩니다", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400)
+                Text("초대 코드는 자동으로 생성됩니다", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray400)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedButton(
                         onClick = onDismiss, modifier = Modifier.weight(1f), shape = ShapePill,
@@ -1389,9 +1389,9 @@ private fun JoinRoomDialog(onJoin: (String) -> Unit, onDismiss: () -> Unit) {
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.size(40.dp).clip(CircleShape).background(거지방Colors.Mint100),
                     ) { Icon(Icons.Rounded.Login, null, tint = 거지방Colors.Mint600, modifier = Modifier.size(20.dp)) }
-                    Text("방 참여하기", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("방 참여하기", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
-                Text("친구에게 초대 코드를 받아 입력해주세요", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray500)
+                Text("친구에게 초대 코드를 받아 입력해주세요", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray500)
                 거지방TextField(value = code.uppercase(), onValueChange = { code = it.uppercase() }, label = "초대 코드 (6자리)")
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedButton(
@@ -1424,9 +1424,9 @@ private fun ShareModeDialog(current: String, onSelect: (String) -> Unit, onDismi
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(0xFFEDE7F6)),
                     ) { Icon(Icons.Rounded.Share, null, tint = Color(0xFF7B1FA2), modifier = Modifier.size(20.dp)) }
-                    Text("지출 범위 공유", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("지출 범위 공유", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
-                Text("랭킹에서 지출을 어떻게 공유할지 선택하세요", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray500)
+                Text("랭킹에서 지출을 어떻게 공유할지 선택하세요", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray500)
                 listOf(Triple("percent", "퍼센트", "수입 대비 지출 비율로 표시"), Triple("amount", "금액", "실제 지출 금액을 표시")).forEach { (mode, label, desc) ->
                     val selected = current == mode
                     Surface(
@@ -1470,9 +1470,9 @@ private fun SpendingAlertDialog(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(0xFFFFF3E0)),
                     ) { Icon(Icons.Rounded.NotificationsActive, null, tint = Color(0xFFFF8F00), modifier = Modifier.size(20.dp)) }
-                    Text("과소비 알람 설정", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("과소비 알람 설정", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
-                Text("설정한 금액을 초과하면 알림을 드려요", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray500)
+                Text("설정한 금액을 초과하면 알림을 드려요", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray500)
                 Surface(
                     shape = Shape14,
                     color = if (isEnabled) 거지방Colors.Mint50 else 거지방Colors.Gray50,
