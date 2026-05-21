@@ -10,6 +10,8 @@ import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
+import io.github.jan.supabase.serializer.KotlinXSerializer
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,10 +20,17 @@ import javax.inject.Singleton
 class SupabaseManager @Inject constructor(
     @dagger.hilt.android.qualifiers.ApplicationContext context: Context
 ) {
+    private val lenientJson = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true   // null → 기본값 강제 적용 (avatar_face 등 방어)
+        isLenient = true
+    }
+
     val client: SupabaseClient = createSupabaseClient(
         supabaseUrl = BuildConfig.SUPABASE_URL,
         supabaseKey = BuildConfig.SUPABASE_ANON_KEY,
     ) {
+        defaultSerializer = KotlinXSerializer(lenientJson)
         install(Postgrest)
         install(Realtime)
         install(Auth) {

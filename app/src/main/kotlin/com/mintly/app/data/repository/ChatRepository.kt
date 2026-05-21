@@ -30,15 +30,23 @@ class ChatRepository @Inject constructor(
             .decodeList<ChatRoom>()
     }.getOrElse { emptyList() }
 
-    suspend fun getOrCreateChatRoom(groupId: String, name: String): ChatRoom = runCatching {
+    suspend fun getOrCreateChatRoom(groupId: String, name: String): ChatRoom {
         val existing = client.from("chat_rooms")
             .select { filter { eq("group_id", groupId) } }
             .decodeList<ChatRoom>()
             .firstOrNull()
-        existing ?: client.from("chat_rooms")
+        if (existing != null) return existing
+
+        // supabase-kt 3.x: insert는 select() 없이 body를 반환하지 않으므로
+        // insert 후 다시 SELECT 해서 가져옴
+        client.from("chat_rooms")
             .insert(mapOf("group_id" to groupId, "name" to name))
-            .decodeSingle<ChatRoom>()
-    }.getOrThrow()
+
+        return client.from("chat_rooms")
+            .select { filter { eq("group_id", groupId) } }
+            .decodeList<ChatRoom>()
+            .first()
+    }
 
     suspend fun getMessages(roomId: String, limit: Int = 50): List<ChatMessage> = runCatching {
         client.from("chat_messages")
