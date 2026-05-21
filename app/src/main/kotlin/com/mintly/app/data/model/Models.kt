@@ -146,7 +146,8 @@ data class RankedMember(
     val rank: Int,
     val isWinner: Boolean,
     val isLoser: Boolean,
-    val shareValue: String, // 퍼센트 or 금액 (설정에 따라)
+    val shareValue: String,    // 퍼센트 or 금액 (설정에 따라)
+    val isNotEntered: Boolean = false, // 오늘 거래 없음
 )
 
 // 룰렛 세그먼트

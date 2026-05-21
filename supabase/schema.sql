@@ -315,26 +315,46 @@ begin
 end;
 $$;
 
--- 자정 정산 함수
+-- 자정 정산 함수 (수입 대비 지출 % 기준 랭킹, 미입력자 제외)
 create or replace function settle_daily_rankings(target_date date)
 returns void language plpgsql security definer as $$
 begin
-  -- 그룹별 지출 합산 및 랭킹 계산
+  -- 거래 기록이 있는 멤버만 랭킹에 포함 (수입 대비 지출 % 오름차순)
   insert into daily_rankings (group_id, user_id, for_date, spent_amount, rank, is_winner, is_loser)
   select
     gm.group_id,
     gm.user_id,
     target_date,
-    coalesce(sum(t.amount), 0) as spent,
-    rank() over (partition by gm.group_id order by coalesce(sum(t.amount),0) asc),
+    coalesce(exp.total, 0) as spent,
+    rank() over (
+      partition by gm.group_id
+      order by
+        case
+          when coalesce(inc.total, 0) > 0
+          then coalesce(exp.total, 0)::float / inc.total::float
+          else coalesce(exp.total, 0)::float
+        end asc
+    ),
     false, false
   from group_members gm
-  left join transactions t
-    on t.user_id   = gm.user_id
-   and t.group_id  = gm.group_id
-   and t.occurred_on = target_date
-   and t.kind = 'expense'
-  group by gm.group_id, gm.user_id
+  -- 오늘 거래 기록이 하나라도 있는 멤버만
+  join (
+    select distinct user_id, group_id
+    from transactions
+    where occurred_on = target_date
+  ) has_tx on has_tx.user_id = gm.user_id and has_tx.group_id = gm.group_id
+  left join (
+    select user_id, group_id, sum(amount) as total
+    from transactions
+    where occurred_on = target_date and kind = 'expense'
+    group by user_id, group_id
+  ) exp on exp.user_id = gm.user_id and exp.group_id = gm.group_id
+  left join (
+    select user_id, group_id, sum(amount) as total
+    from transactions
+    where occurred_on = target_date and kind = 'income'
+    group by user_id, group_id
+  ) inc on inc.user_id = gm.user_id and inc.group_id = gm.group_id
   on conflict do nothing;
 
   -- 1등/꼴등 표시

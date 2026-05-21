@@ -131,6 +131,7 @@ fun RankingScreen(vm: RankingViewModel = hiltViewModel()) {
 
             // ─── 선택된 방 초대코드 칩 ─────────────────────────
             if (selectedGroup != null && state.rankings.isNotEmpty()) {
+                val activeCount = state.rankings.count { !it.isNotEntered }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -139,7 +140,7 @@ fun RankingScreen(vm: RankingViewModel = hiltViewModel()) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        "오늘 지출 순위  •  ${state.rankings.size}명 참여",
+                        "수입 대비 지출 % 기준  •  ${activeCount}명 입력",
                         style = MaterialTheme.typography.labelSmall,
                         color = 거지방Colors.Gray400,
                     )
@@ -180,18 +181,43 @@ fun RankingScreen(vm: RankingViewModel = hiltViewModel()) {
             } else if (state.rankings.isEmpty()) {
                 EmptyState(
                     emoji = "📊",
-                    message = "오늘 아직 지출 기록이 없어요\n지출을 기록하면 순위가 표시됩니다",
+                    message = "오늘 아직 지출 기록이 없어요\n가계부에서 거래를 추가하면 순위가 표시됩니다",
                 )
             } else {
+                val activeRankings   = state.rankings.filter { !it.isNotEntered }
+                val inactiveRankings = state.rankings.filter {  it.isNotEntered }
                 LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 20.dp, top = 8.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    itemsIndexed(state.rankings, key = { _, r -> r.profile.id }) { _, ranked ->
-                        RankRow(
-                            ranked  = ranked,
-                            onClick = { vm.selectFriend(ranked.profile) },
-                        )
+                    // 입력한 멤버 (순위 있음)
+                    items(activeRankings, key = { it.profile.id }) { ranked ->
+                        RankRow(ranked = ranked, onClick = { vm.selectFriend(ranked.profile) })
+                    }
+                    // 미입력 구분선
+                    if (inactiveRankings.isNotEmpty()) {
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp, bottom = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                HorizontalDivider(modifier = Modifier.weight(1f), color = 거지방Colors.Gray200)
+                                Text(
+                                    "미입력",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = 거지방Colors.Gray400,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                HorizontalDivider(modifier = Modifier.weight(1f), color = 거지방Colors.Gray200)
+                            }
+                        }
+                        items(inactiveRankings, key = { it.profile.id }) { ranked ->
+                            RankRow(ranked = ranked, onClick = { vm.selectFriend(ranked.profile) })
+                        }
                     }
                 }
             }
@@ -367,17 +393,21 @@ private fun InviteSheet(group: FriendGroup, onDismiss: () -> Unit) {
 // ─── 랭킹 행 ───────────────────────────────────────────────
 @Composable
 private fun RankRow(ranked: RankedMember, onClick: () -> Unit) {
-    val isFirst  = ranked.rank == 1
-    val isLoser  = ranked.isLoser
-    val bgColor  = when {
-        isFirst -> 거지방Colors.RankFirstBg
-        isLoser -> 거지방Colors.RankLoserBg
-        else    -> Color.White
+    val isNotEntered = ranked.isNotEntered
+    val isFirst      = ranked.isWinner && !isNotEntered
+    val isLoser      = ranked.isLoser  && !isNotEntered
+
+    val bgColor = when {
+        isNotEntered -> Color.White
+        isFirst      -> 거지방Colors.RankFirstBg
+        isLoser      -> 거지방Colors.RankLoserBg
+        else         -> Color.White
     }
     val borderColor = when {
-        isFirst -> 거지방Colors.Coin
-        isLoser -> 거지방Colors.RankLoserBorder
-        else    -> 거지방Colors.Gray200
+        isNotEntered -> 거지방Colors.Gray100
+        isFirst      -> 거지방Colors.Coin
+        isLoser      -> 거지방Colors.RankLoserBorder
+        else         -> 거지방Colors.Gray200
     }
 
     Surface(
@@ -389,37 +419,39 @@ private fun RankRow(ranked: RankedMember, onClick: () -> Unit) {
         border = BorderStroke(1.dp, borderColor),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // 순위
+            // ─── 순위 원 ─────────────────────────────────────
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(34.dp)
                     .clip(CircleShape)
                     .background(
-                        when (ranked.rank) {
-                            1    -> 거지방Colors.Coin
-                            2    -> 거지방Colors.Rank2
-                            3    -> 거지방Colors.Rank3
-                            else -> 거지방Colors.Gray100
+                        when {
+                            isNotEntered     -> 거지방Colors.Gray100
+                            ranked.rank == 1 -> 거지방Colors.Coin
+                            ranked.rank == 2 -> 거지방Colors.Rank2
+                            ranked.rank == 3 -> 거지방Colors.Rank3
+                            else             -> 거지방Colors.Gray100
                         }
                     ),
             ) {
-                Text(
-                    when (ranked.rank) {
-                        1 -> "👑"
-                        else -> "${ranked.rank}"
-                    },
-                    fontSize = if (ranked.rank == 1) 16.sp else 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (ranked.rank <= 3) Color.White else 거지방Colors.Gray700,
-                )
+                when {
+                    isNotEntered     -> Text("─", fontSize = 12.sp, color = 거지방Colors.Gray400)
+                    ranked.rank == 1 -> Text("👑", fontSize = 16.sp)
+                    else             -> Text(
+                        "${ranked.rank}",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (ranked.rank <= 3) Color.White else 거지방Colors.Gray600,
+                    )
+                }
             }
 
-            // 아바타
+            // ─── 아바타 ──────────────────────────────────────
             Box {
                 MiniAvatar(
                     size = 44.dp,
@@ -433,31 +465,97 @@ private fun RankRow(ranked: RankedMember, onClick: () -> Unit) {
                 }
             }
 
-            // 이름 + 지출
-            Column(modifier = Modifier.weight(1f)) {
+            // ─── 이름 + 지출 금액 ─────────────────────────────
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
                 Text(
                     ranked.profile.displayName,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
+                    color = if (isNotEntered) 거지방Colors.Gray400 else 거지방Colors.Gray900,
                 )
-                Text(
-                    text = ranked.shareValue,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = 거지방Colors.Expense,
-                )
-            }
-
-            // 1등/꼴등 뱃지
-            if (isFirst) {
-                Surface(shape = ShapePill, color = 거지방Colors.RankFirstBg, border = BorderStroke(1.dp, 거지방Colors.Coin)) {
-                    Text("1등 🥇", style = MaterialTheme.typography.labelSmall, color = 거지방Colors.CoinDark,
-                        fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
+                if (!isNotEntered) {
+                    Text(
+                        "지출 %,d원".format(ranked.spentAmount),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = 거지방Colors.Expense.copy(alpha = 0.8f),
+                    )
                 }
             }
-            if (isLoser) {
-                Surface(shape = ShapePill, color = 거지방Colors.RankLoserBg, border = BorderStroke(1.dp, 거지방Colors.RankLoserBorder)) {
-                    Text("꼴등 😅", style = MaterialTheme.typography.labelSmall, color = 거지방Colors.RankLoserText,
-                        fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
+
+            // ─── 우측: % 수치 + 뱃지 ─────────────────────────
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                // 수입 대비 지출 % (수입이 기록된 경우)
+                if (!isNotEntered && ranked.incomeAmount > 0) {
+                    val pct = (ranked.spentAmount.toDouble() / ranked.incomeAmount * 100).toInt()
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(1.dp),
+                    ) {
+                        Text(
+                            "${pct}%",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = when {
+                                isFirst -> 거지방Colors.CoinDark
+                                isLoser -> 거지방Colors.Danger
+                                else    -> 거지방Colors.Expense
+                            },
+                        )
+                        Text(
+                            "수입 대비",
+                            fontSize = 9.sp,
+                            color = 거지방Colors.Gray400,
+                        )
+                    }
+                }
+
+                // 미입력 / 1등 / 꼴등 뱃지
+                when {
+                    isNotEntered -> Surface(
+                        shape = ShapePill,
+                        color = 거지방Colors.Gray100,
+                        border = BorderStroke(1.dp, 거지방Colors.Gray200),
+                    ) {
+                        Text(
+                            "미입력",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = 거지방Colors.Gray500,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        )
+                    }
+                    isFirst -> Surface(
+                        shape = ShapePill,
+                        color = 거지방Colors.RankFirstBg,
+                        border = BorderStroke(1.dp, 거지방Colors.Coin),
+                    ) {
+                        Text(
+                            "1등 🥇",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = 거지방Colors.CoinDark,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                        )
+                    }
+                    isLoser -> Surface(
+                        shape = ShapePill,
+                        color = 거지방Colors.RankLoserBg,
+                        border = BorderStroke(1.dp, 거지방Colors.RankLoserBorder),
+                    ) {
+                        Text(
+                            "꼴등 😅",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = 거지방Colors.RankLoserText,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                        )
+                    }
                 }
             }
         }
@@ -506,8 +604,8 @@ private fun FriendProfileDialog(
                 if (rankedMember != null) {
                     Surface(
                         shape = Shape14,
-                        color = 거지방Colors.Mint50,
-                        border = BorderStroke(1.dp, 거지방Colors.Mint200),
+                        color = if (rankedMember.isNotEntered) 거지방Colors.Gray50 else 거지방Colors.Mint50,
+                        border = BorderStroke(1.dp, if (rankedMember.isNotEntered) 거지방Colors.Gray200 else 거지방Colors.Mint200),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Column(
@@ -515,17 +613,20 @@ private fun FriendProfileDialog(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            // shareMode에 따라 다른 정보 표시
-                            if (profile.shareMode == "percent") {
+                            if (rankedMember.isNotEntered) {
+                                // 미입력
+                                Text("오늘 거래 없음", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Gray400)
+                                Text("─", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray300)
+                            } else if (profile.shareMode == "percent") {
                                 val pct = if (rankedMember.incomeAmount > 0)
                                     (rankedMember.spentAmount.toDouble() / rankedMember.incomeAmount * 100).toInt()
                                 else null
                                 Text("수입 대비 지출", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Gray500)
                                 Text(
-                                    if (pct != null) "${pct}%" else "정보 없음",
+                                    if (pct != null) "${pct}%" else "수입 미기록",
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
-                                    color = 거지방Colors.Expense,
+                                    color = if (pct != null) 거지방Colors.Expense else 거지방Colors.Gray400,
                                 )
                                 if (pct != null) {
                                     Text(
@@ -533,9 +634,14 @@ private fun FriendProfileDialog(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = 거지방Colors.Gray400,
                                     )
+                                } else if (rankedMember.spentAmount > 0) {
+                                    Text(
+                                        "지출 %,d원".format(rankedMember.spentAmount),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = 거지방Colors.Expense,
+                                    )
                                 }
                             } else {
-                                // amount 모드
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceEvenly,
@@ -560,11 +666,13 @@ private fun FriendProfileDialog(
                                     }
                                 }
                             }
-                            Text(
-                                "현재 ${rankedMember.rank}위",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = 거지방Colors.Mint600,
-                            )
+                            if (!rankedMember.isNotEntered) {
+                                Text(
+                                    "현재 ${rankedMember.rank}위",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = 거지방Colors.Mint600,
+                                )
+                            }
                         }
                     }
                 }
