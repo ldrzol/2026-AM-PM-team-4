@@ -371,58 +371,38 @@ private fun WardrobeBottomSheet(
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var tab by remember { mutableStateOf("hat") }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(modifier = Modifier.padding(20.dp).navigationBarsPadding()) {
-            Text("옷장", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(12.dp))
+            Text("악세서리 옷장 🎀", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(16.dp))
 
-            // 탭
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("hat" to "모자", "outfit" to "옷").forEach { (id, label) ->
-                    FilterChip(
-                        selected = tab == id,
-                        onClick  = { tab = id },
-                        label    = { Text(label) },
-                        colors   = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = 거지방Colors.Mint400,
-                            selectedLabelColor     = Color.White,
-                        ),
-                    )
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-
-            val items = inventory.filter { it.costume?.kind == tab }
+            val items = inventory.filter { it.costume?.kind == "hat" }
             if (items.isEmpty()) {
-                Text("보유한 아이템이 없습니다", color = 거지방Colors.Gray400,
+                Text(
+                    "보유한 악세서리가 없습니다\n샵에서 구매해보세요!",
+                    color = 거지방Colors.Gray400,
                     modifier = Modifier.padding(vertical = 24.dp).fillMaxWidth(),
-                    style = MaterialTheme.typography.bodyMedium)
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                )
             } else {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    // 없음 선택
                     item {
-                        val selected = if (tab == "hat") profile?.currentHat == null else profile?.currentOutfit == null
                         CostumeItem(
-                            icon = "❌",
-                            name = "없음",
-                            selected = selected,
-                            onClick = { if (tab == "hat") onEquipHat(null) else onEquipOutfit(null) },
+                            icon     = "❌",
+                            name     = "없음",
+                            selected = profile?.currentHat == null,
+                            onClick  = { onEquipHat(null) },
                         )
                     }
                     items(items) { uc ->
                         val costume = uc.costume ?: return@items
-                        val isEquipped = if (tab == "hat") profile?.currentHat == costume.id
-                        else profile?.currentOutfit == costume.id
                         CostumeItem(
-                            icon = costume.icon,
-                            name = costume.name,
-                            selected = isEquipped,
-                            onClick = {
-                                if (tab == "hat") onEquipHat(costume.id)
-                                else onEquipOutfit(costume.id)
-                            },
+                            icon     = costume.icon,
+                            name     = costume.name,
+                            selected = profile?.currentHat == costume.id,
+                            onClick  = { onEquipHat(costume.id) },
                         )
                     }
                 }
@@ -453,7 +433,7 @@ private fun CostumeItem(icon: String, name: String, selected: Boolean, onClick: 
     }
 }
 
-// ─── 아바타 편집 BottomSheet ──────────────────────────────
+// ─── 아바타 편집 BottomSheet (색상만) ────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AvatarEditorBottomSheet(
@@ -464,18 +444,25 @@ private fun AvatarEditorBottomSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var color by remember { mutableStateOf(currentColor) }
-    var face  by remember { mutableStateOf(currentFace) }
-    var tab   by remember { mutableStateOf("face") } // "face" | "hair" | "color"
 
-    // 옵션 목록
-    val colorOpts     = listOf("mint" to "민트", "peach" to "복숭아", "blue" to "하늘", "purple" to "보라", "yellow" to "노랑")
-    val colorValues   = mapOf("mint" to Color(0xFF74BBAE), "peach" to Color(0xFFE5896B), "blue" to Color(0xFF6BA3D6), "purple" to Color(0xFF9C7DD9), "yellow" to Color(0xFFE8B547))
-    val eyeOpts       = listOf("e1" to "기본 👁", "e28" to "큰 눈 👀", "dots" to "점눈 ·", "arc" to "^_^")
-    val noseOpts      = listOf("n1" to "작은 코", "n3" to "콧구멍", "n10" to "U자 코")
-    val mouthOpts     = listOf("m2" to "미소 🙂", "m17" to "물결 〜", "m22" to "한쪽 ◝", "m26" to "활짝 😄", "line" to "무표정 —")
-    val glassesOpts   = listOf(null to "없음 🚫", "round" to "둥근 ⭕", "square" to "각진 ◻", "half" to "하프 ⌓", "heart" to "하트 ♡", "star" to "별 ⭐")
-    val frontHairOpts = listOf("none" to "없음", "fh3" to "스타일 1", "fh5" to "스타일 2", "fh9" to "스타일 3", "fh13" to "스타일 4", "fh30" to "스타일 5", "fh43" to "스타일 6")
-    val backHairOpts  = listOf("none" to "없음", "bh5" to "스타일 1", "bh9" to "스타일 2", "bh31" to "스타일 3", "bh43" to "스타일 4")
+    val colorOpts = listOf(
+        "mint"   to "민트",
+        "peach"  to "복숭아",
+        "blue"   to "하늘",
+        "purple" to "보라",
+        "yellow" to "노랑",
+        "pink"   to "핑크",
+        "green"  to "연두",
+    )
+    val colorValues = mapOf(
+        "mint"   to Color(0xFF74BBAE),
+        "peach"  to Color(0xFFE5896B),
+        "blue"   to Color(0xFF6BA3D6),
+        "purple" to Color(0xFF9C7DD9),
+        "yellow" to Color(0xFFE8B547),
+        "pink"   to Color(0xFFEF8FAB),
+        "green"  to Color(0xFF5DBB77),
+    )
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -485,7 +472,8 @@ private fun AvatarEditorBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding(),
+                .navigationBarsPadding()
+                .padding(bottom = 24.dp),
         ) {
             // ─ 헤더 ──────────────────────────────────────────
             Row(
@@ -493,11 +481,11 @@ private fun AvatarEditorBottomSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("아바타 꾸미기", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("색상 꾸미기 🎨", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(onClick = onDismiss) { Text("취소", color = 거지방Colors.Gray500) }
                     Button(
-                        onClick = { onSave(color, face); onDismiss() },
+                        onClick = { onSave(color, currentFace); onDismiss() },
                         shape = ShapePill,
                         colors = ButtonDefaults.buttonColors(containerColor = 거지방Colors.Mint400),
                         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
@@ -508,126 +496,67 @@ private fun AvatarEditorBottomSheet(
 
             // ─ 아바타 미리보기 ────────────────────────────────
             Box(
-                modifier = Modifier.fillMaxWidth().height(160.dp).background(거지방Colors.Mint50),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .background(거지방Colors.Mint50),
                 contentAlignment = Alignment.Center,
             ) {
-                거지방Avatar(size = 130.dp, color = color, face = face)
+                거지방Avatar(size = 140.dp, color = color, face = currentFace)
             }
 
-            // ─ 탭 ────────────────────────────────────────────
+            Spacer(Modifier.height(20.dp))
+
+            // ─ 색상 팔레트 ────────────────────────────────────
+            Text(
+                "색상 선택",
+                style = MaterialTheme.typography.bodyMedium,
+                color = 거지방Colors.Gray500,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(horizontal = 20.dp),
+            )
+            Spacer(Modifier.height(14.dp))
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp)
-                    .clip(ShapePill)
-                    .background(거지방Colors.Gray100)
-                    .padding(4.dp),
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                listOf("face" to "얼굴 😊", "hair" to "헤어 💇", "color" to "색상 🎨").forEach { (id, label) ->
-                    val active = tab == id
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(ShapePill)
-                            .background(if (active) Color.White else Color.Transparent)
-                            .clickable { tab = id }
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center,
+                colorOpts.forEach { (id, name) ->
+                    val selected = color == id
+                    val c = colorValues[id] ?: 거지방Colors.Mint400
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.clickable { color = id },
                     ) {
-                        Text(
-                            label,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
-                            color = if (active) 거지방Colors.Mint700 else 거지방Colors.Gray500,
-                        )
-                    }
-                }
-            }
-
-            // ─ 탭 콘텐츠 ─────────────────────────────────────
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 200.dp, max = 320.dp)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                    .padding(bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                when (tab) {
-                    "face" -> {
-                        AvatarSelectorRow("눈", eyeOpts.map { it.first to it.second }, face.eye) { face = face.copy(eye = it) }
-                        AvatarSelectorRow("코", noseOpts.map { it.first to it.second }, face.nose) { face = face.copy(nose = it) }
-                        AvatarSelectorRow("입", mouthOpts.map { it.first to it.second }, face.mouth) { face = face.copy(mouth = it) }
-                        AvatarSelectorRow(
-                            "안경",
-                            glassesOpts.map { (k, v) -> (k ?: "none") to v },
-                            face.glasses ?: "none",
-                        ) { face = face.copy(glasses = if (it == "none") null else it) }
-                    }
-                    "hair" -> {
-                        AvatarSelectorRow("앞머리", frontHairOpts.map { it.first to it.second }, face.frontHair) { face = face.copy(frontHair = it) }
-                        AvatarSelectorRow("뒷머리", backHairOpts.map { it.first to it.second }, face.backHair) { face = face.copy(backHair = it) }
-                    }
-                    "color" -> {
-                        Text("바디 색상", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray500, fontWeight = FontWeight.SemiBold)
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            colorOpts.forEach { (id, name) ->
-                                val selected = color == id
-                                val c = colorValues[id] ?: 거지방Colors.Mint400
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                                    modifier = Modifier.clickable { color = id },
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(44.dp)
-                                            .clip(CircleShape)
-                                            .background(c)
-                                            .border(if (selected) 3.dp else 0.dp, Color.White, CircleShape),
-                                    ) {
-                                        if (selected) {
-                                            Icon(Icons.Rounded.Check, null, tint = Color.White,
-                                                modifier = Modifier.align(Alignment.Center).size(20.dp))
-                                        }
-                                    }
-                                    Text(name, style = MaterialTheme.typography.bodySmall, color = if (selected) 거지방Colors.Mint700 else 거지방Colors.Gray500, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
-                                }
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(c)
+                                .then(
+                                    if (selected) Modifier.border(3.dp, Color.White, CircleShape)
+                                    else Modifier
+                                ),
+                        ) {
+                            if (selected) {
+                                Icon(
+                                    Icons.Rounded.Check, null,
+                                    tint     = Color.White,
+                                    modifier = Modifier.size(18.dp),
+                                )
                             }
                         }
+                        Text(
+                            name,
+                            style      = MaterialTheme.typography.bodySmall,
+                            color      = if (selected) 거지방Colors.Mint700 else 거지방Colors.Gray400,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                        )
                     }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AvatarSelectorRow(
-    label: String,
-    options: List<Pair<String, String>>,
-    selected: String,
-    onSelect: (String) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray500, fontWeight = FontWeight.SemiBold)
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            items(options) { (id, name) ->
-                val isSelected = selected == id
-                Surface(
-                    shape = ShapePill,
-                    color = if (isSelected) 거지방Colors.Mint100 else 거지방Colors.Gray50,
-                    border = BorderStroke(if (isSelected) 1.5.dp else 1.dp, if (isSelected) 거지방Colors.Mint400 else 거지방Colors.Gray200),
-                    modifier = Modifier.clickable { onSelect(id) },
-                ) {
-                    Text(
-                        name,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (isSelected) 거지방Colors.Mint700 else 거지방Colors.Gray600,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    )
                 }
             }
         }

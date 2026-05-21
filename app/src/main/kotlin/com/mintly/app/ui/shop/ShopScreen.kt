@@ -317,8 +317,7 @@ private fun RouletteTab(state: ShopUiState, onSpin: () -> Unit) {
 // ─── 코스튬 상점 탭 ────────────────────────────────────────
 @Composable
 private fun CostumeStoreTab(state: ShopUiState, onBuy: (Costume) -> Unit) {
-    val hats    = state.shopCostumes.filter { it.kind == "hat" }
-    val outfits = state.shopCostumes.filter { it.kind == "outfit" }
+    val accessories = state.shopCostumes.filter { it.kind == "hat" }
 
     Column(
         modifier = Modifier
@@ -327,36 +326,23 @@ private fun CostumeStoreTab(state: ShopUiState, onBuy: (Costume) -> Unit) {
             .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (hats.isNotEmpty()) {
-            Text("모자", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                modifier = Modifier.height(((hats.size / 3 + 1) * 130).dp),
-                userScrollEnabled = false,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+        if (accessories.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                items(hats) { costume ->
-                    CostumeCard(
-                        costume = costume,
-                        owned   = costume.id in state.ownedCostumeIds,
-                        coins   = state.coins,
-                        onBuy   = { onBuy(costume) },
-                    )
-                }
+                Text("준비 중입니다 🎀", style = MaterialTheme.typography.bodyLarge, color = 거지방Colors.Gray400)
             }
-        }
-
-        if (outfits.isNotEmpty()) {
-            Text("옷", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        } else {
+            Text("헤어 악세서리 🎀", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
-                modifier = Modifier.height(((outfits.size / 3 + 1) * 130).dp),
+                modifier = Modifier.height(((accessories.size / 3 + 1) * 130).dp),
                 userScrollEnabled = false,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(outfits) { costume ->
+                items(accessories) { costume ->
                     CostumeCard(
                         costume = costume,
                         owned   = costume.id in state.ownedCostumeIds,

@@ -173,15 +173,22 @@ val DEFAULT_ROULETTE_SEGMENTS = listOf(
 )
 
 val DEFAULT_COSTUMES = listOf(
-    Costume("hat_crown",      "hat",    "왕관",      800, "legendary", "👑", isSpecial = true),
-    Costume("hat_cap",        "hat",    "캡 모자",   200, "common",    "🧢"),
-    Costume("hat_bunny",      "hat",    "토끼 귀",   300, "rare",      "🐰"),
-    Costume("hat_flower",     "hat",    "꽃 화관",   450, "epic",      "🌸"),
-    Costume("hat_beanie",     "hat",    "비니",      250, "common",    "🧶"),
-    Costume("outfit_hoodie",  "outfit", "후드티",    400, "rare",      "🧥"),
-    Costume("outfit_suit",    "outfit", "정장",      600, "epic",      "👔"),
-    Costume("outfit_casual",  "outfit", "캐주얼",    350, "common",    "👕"),
-    Costume("outfit_beggar",  "outfit", "거지옷",      0, "common",    "🧺", isSpecial = true),
-    Costume("outfit_sports",  "outfit", "스포츠웨어", 380, "common",   "🏃"),
-    Costume("outfit_hanbok",  "outfit", "한복",      700, "epic",      "👘"),
+    // ── 헤어 악세서리 (샵 판매) ─────────────────────────────
+    Costume("hat_crown",       "hat", "왕관",       800, "legendary", "👑", isSpecial = true),
+    Costume("hat_bow",         "hat", "리본",        150, "common",    "🎀"),
+    Costume("hat_cat",         "hat", "고양이 귀",   350, "rare",      "🐱"),
+    Costume("hat_star",        "hat", "별 핀",       180, "common",    "⭐"),
+    Costume("hat_flower_clip", "hat", "꽃 핀",       220, "rare",      "🌸"),
+    Costume("hat_side_ribbon", "hat", "사이드 리본", 280, "rare",      "🎗️"),
+    Costume("hat_cap",         "hat", "캡 모자",     200, "common",    "🧢"),
+    Costume("hat_bunny",       "hat", "토끼 귀",     300, "rare",      "🐰"),
+    Costume("hat_flower",      "hat", "꽃 화관",     450, "epic",      "💐"),
+    Costume("hat_beanie",      "hat", "비니",        250, "common",    "🧶"),
+    // ── 아우터 (샵 미판매, 하위 호환) ───────────────────────
+    Costume("outfit_hoodie",  "outfit", "후드티",    400, "rare",    "🧥", isShop = false),
+    Costume("outfit_suit",    "outfit", "정장",      600, "epic",    "👔", isShop = false),
+    Costume("outfit_casual",  "outfit", "캐주얼",    350, "common",  "👕", isShop = false),
+    Costume("outfit_beggar",  "outfit", "거지옷",      0, "common",  "🧺", isShop = false, isSpecial = true),
+    Costume("outfit_sports",  "outfit", "스포츠웨어",380, "common",  "🏃", isShop = false),
+    Costume("outfit_hanbok",  "outfit", "한복",      700, "epic",    "👘", isShop = false),
 )
