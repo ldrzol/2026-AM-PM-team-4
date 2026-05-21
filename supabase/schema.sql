@@ -127,15 +127,17 @@ create table if not exists costumes (
 );
 
 insert into costumes (id, kind, name, price, rarity, icon, is_shop, is_special) values
-  ('hat_crown',    'hat',    '왕관',    800, 'legendary', '👑', true,  true),
-  ('hat_cap',      'hat',    '캡 모자', 200, 'common',    '🧢', true,  false),
-  ('hat_bunny',    'hat',    '토끼 귀', 300, 'rare',      '🐰', true,  false),
-  ('hat_flower',   'hat',    '꽃 화관', 450, 'epic',      '🌸', true,  false),
-  ('hat_beanie',   'hat',    '비니',    250, 'common',    '🧶', true,  false),
-  ('outfit_hoodie','outfit', '후드티',  400, 'rare',      '🧥', true,  false),
-  ('outfit_suit',  'outfit', '정장',    600, 'epic',      '👔', true,  false),
-  ('outfit_casual','outfit', '캐주얼',  350, 'common',    '👕', true,  false),
-  ('outfit_beggar','outfit', '거지옷',    0, 'common',    '🧺', false, true)
+  ('hat_crown',       'hat',    '왕관',       800, 'legendary', '👑', true,  true),
+  ('hat_cap',         'hat',    '캡 모자',    200, 'common',    '🧢', true,  false),
+  ('hat_bunny',       'hat',    '토끼 귀',    300, 'rare',      '🐰', true,  false),
+  ('hat_flower',      'hat',    '꽃 화관',    450, 'epic',      '🌸', true,  false),
+  ('hat_beanie',      'hat',    '비니',       250, 'common',    '🧶', true,  false),
+  ('outfit_hoodie',   'outfit', '후드티',     400, 'rare',      '🧥', true,  false),
+  ('outfit_suit',     'outfit', '정장',       600, 'epic',      '👔', true,  false),
+  ('outfit_casual',   'outfit', '캐주얼',     350, 'common',    '👕', true,  false),
+  ('outfit_beggar',   'outfit', '거지옷',       0, 'common',    '🧺', false, true),
+  ('outfit_sports',   'outfit', '스포츠웨어', 380, 'common',    '🏃', true,  false),
+  ('outfit_hanbok',   'outfit', '한복',       700, 'epic',      '👘', true,  false)
 on conflict do nothing;
 
 -- ── 7) user_costumes ─────────────────────────────────────────

@@ -17,15 +17,18 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.cos
+import kotlin.math.sin
 
 // ─── 아바타 얼굴 설정 ─────────────────────────────────────
 data class AvatarFace(
-    val frontHair: String = "fh3",
-    val backHair:  String = "bh5",
-    val eye:       String = "e1",
-    val eyebrow:   String = "b15",
-    val nose:      String = "n1",
-    val mouth:     String = "m2",
+    val frontHair: String  = "fh3",
+    val backHair:  String  = "bh5",
+    val eye:       String  = "e1",
+    val eyebrow:   String  = "b15",
+    val nose:      String  = "n1",
+    val mouth:     String  = "m2",
+    val glasses:   String? = null,   // null = 안경 없음
 )
 
 // ─── 바디 팔레트 ───────────────────────────────────────────
@@ -209,6 +212,50 @@ private fun DrawScope.drawAvatarContent(
                 cubicTo(hCx - 28, 115f, hCx - 26, 100f, hCx - 22, 88f)
             }
             drawPath(suitPath, Color(0xFF3A3E43))
+            // 넥타이
+            val tiePath = Path().apply {
+                moveTo(hCx - 3, 90f); lineTo(hCx + 3, 90f)
+                lineTo(hCx + 5, 108f); lineTo(hCx, 115f); lineTo(hCx - 5, 108f); close()
+            }
+            drawPath(tiePath, Color(0xFFDC5B5B))
+        }
+        "sports" -> {
+            // 스포츠웨어: 밝은 색 민소매
+            val sportPath = Path().apply {
+                moveTo(hCx - 22, 88f)
+                cubicTo(hCx - 26, 100f, hCx - 26, 115f, hCx - 22, 130f)
+                lineTo(hCx + 22, 130f)
+                cubicTo(hCx + 26, 115f, hCx + 26, 100f, hCx + 22, 88f)
+                close()
+            }
+            drawPath(sportPath, Color(0xFF6BA3D6))
+            // 줄무늬
+            for (i in 0 until 3) {
+                drawRect(
+                    color = Color.White.copy(alpha = 0.3f),
+                    topLeft = Offset(hCx - 10 + i * 8, 92f),
+                    size = Size(3f, 36f),
+                )
+            }
+        }
+        "hanbok" -> {
+            // 한복: 연한 분홍 저고리
+            val hanbokPath = Path().apply {
+                moveTo(hCx - 22, 88f)
+                lineTo(hCx - 18, 88f)
+                cubicTo(hCx - 16, 94f, hCx - 10, 98f, hCx, 96f)
+                cubicTo(hCx + 10, 98f, hCx + 16, 94f, hCx + 18, 88f)
+                lineTo(hCx + 22, 88f)
+                cubicTo(hCx + 28, 100f, hCx + 28, 115f, hCx + 22, 130f)
+                lineTo(hCx - 22, 130f)
+                cubicTo(hCx - 28, 115f, hCx - 28, 100f, hCx - 22, 88f)
+            }
+            drawPath(hanbokPath, Color(0xFFFFC8D4))
+            // 동정 (흰 깃)
+            val collar = Path().apply {
+                moveTo(hCx - 6, 88f); lineTo(hCx, 100f); lineTo(hCx + 6, 88f)
+            }
+            drawPath(collar, Color.White, style = Stroke(width = 3f, cap = androidx.compose.ui.graphics.StrokeCap.Round))
         }
     }
 
@@ -233,6 +280,9 @@ private fun DrawScope.drawAvatarContent(
 
     // 눈
     drawEyes(face.eye, hCx - 19, hCy - 6f)
+
+    // 안경 (눈 위에 덧그림)
+    face.glasses?.let { drawGlasses(it, hCx, hCy - 6f) }
 
     // 코
     drawNose(face.nose, hCx, hCy + 4f)
@@ -362,6 +412,101 @@ private fun DrawScope.drawMouth(style: String, x: Float, y: Float) {
             drawPath(p, FEATURE, style = Stroke(width = 2f, cap = androidx.compose.ui.graphics.StrokeCap.Round))
         }
         else  -> MOUTH_PATHS["m2"]?.let { p -> withTransform({ translate(x, y) }) { drawPath(p, FEATURE) } }
+    }
+}
+
+// ─── 안경 ─────────────────────────────────────────────────
+private fun DrawScope.drawGlasses(style: String, cx: Float, y: Float) {
+    val frameColor = Color(0xFF2C2C2C)
+    val frameStroke = Stroke(width = 2.2f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+    when (style) {
+        "round" -> {
+            // 둥근 안경
+            val path = Path().apply {
+                // 왼쪽 프레임
+                addOval(androidx.compose.ui.geometry.Rect(cx - 19f, y, cx - 5f, y + 14f))
+                // 오른쪽 프레임
+                addOval(androidx.compose.ui.geometry.Rect(cx + 5f, y, cx + 19f, y + 14f))
+                // 브리지 (코 연결)
+                moveTo(cx - 5f, y + 7f); lineTo(cx + 5f, y + 7f)
+                // 왼쪽 안경다리
+                moveTo(cx - 19f, y + 7f); lineTo(cx - 24f, y + 6f)
+                // 오른쪽 안경다리
+                moveTo(cx + 19f, y + 7f); lineTo(cx + 24f, y + 6f)
+            }
+            drawPath(path, frameColor, style = frameStroke)
+        }
+        "square" -> {
+            // 각진 안경
+            val path = Path().apply {
+                // 왼쪽 프레임
+                addRect(androidx.compose.ui.geometry.Rect(cx - 19f, y, cx - 5f, y + 13f))
+                // 오른쪽 프레임
+                addRect(androidx.compose.ui.geometry.Rect(cx + 5f, y, cx + 19f, y + 13f))
+                // 브리지
+                moveTo(cx - 5f, y + 6.5f); lineTo(cx + 5f, y + 6.5f)
+                // 안경다리
+                moveTo(cx - 19f, y + 6.5f); lineTo(cx - 24f, y + 5.5f)
+                moveTo(cx + 19f, y + 6.5f); lineTo(cx + 24f, y + 5.5f)
+            }
+            drawPath(path, frameColor, style = frameStroke)
+        }
+        "half" -> {
+            // 하프 안경 (아래 반만)
+            val path = Path().apply {
+                moveTo(cx - 19f, y + 7f)
+                arcTo(androidx.compose.ui.geometry.Rect(cx - 19f, y, cx - 5f, y + 14f), 0f, 180f, false)
+                moveTo(cx + 5f, y + 7f)
+                arcTo(androidx.compose.ui.geometry.Rect(cx + 5f, y, cx + 19f, y + 14f), 0f, 180f, false)
+                moveTo(cx - 5f, y + 7f); lineTo(cx + 5f, y + 7f)
+                moveTo(cx - 19f, y + 7f); lineTo(cx - 24f, y + 6f)
+                moveTo(cx + 19f, y + 7f); lineTo(cx + 24f, y + 6f)
+            }
+            drawPath(path, frameColor, style = frameStroke)
+        }
+        "heart" -> {
+            // 하트 안경 (귀여움)
+            val pinkFrame = Color(0xFFFF80AB)
+            val path = Path().apply {
+                // 왼쪽 하트
+                moveTo(cx - 12f, y + 3f)
+                cubicTo(cx - 12f, y, cx - 19f, y, cx - 19f, y + 5f)
+                cubicTo(cx - 19f, y + 10f, cx - 12f, y + 13f, cx - 12f, y + 13f)
+                cubicTo(cx - 12f, y + 13f, cx - 5f, y + 10f, cx - 5f, y + 5f)
+                cubicTo(cx - 5f, y, cx - 12f, y, cx - 12f, y + 3f)
+                // 오른쪽 하트
+                moveTo(cx + 12f, y + 3f)
+                cubicTo(cx + 12f, y, cx + 5f, y, cx + 5f, y + 5f)
+                cubicTo(cx + 5f, y + 10f, cx + 12f, y + 13f, cx + 12f, y + 13f)
+                cubicTo(cx + 12f, y + 13f, cx + 19f, y + 10f, cx + 19f, y + 5f)
+                cubicTo(cx + 19f, y, cx + 12f, y, cx + 12f, y + 3f)
+            }
+            drawPath(path, pinkFrame, style = Stroke(width = 2f))
+            // 브리지
+            val bridge = Path().apply { moveTo(cx - 5f, y + 7f); lineTo(cx + 5f, y + 7f) }
+            drawPath(bridge, pinkFrame, style = Stroke(width = 2f))
+        }
+        "star" -> {
+            // 별 모양 안경 (특별)
+            val goldColor = Color(0xFFE8B547)
+            fun starPath(cx: Float, cy: Float, r: Float): Path {
+                val path = Path()
+                val innerR = r * 0.45f
+                for (i in 0 until 10) {
+                    val angle = (Math.PI * i / 5 - Math.PI / 2).toFloat()
+                    val radius = if (i % 2 == 0) r else innerR
+                    val px = cx + radius * cos(angle)
+                    val py = cy + radius * sin(angle)
+                    if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
+                }
+                path.close()
+                return path
+            }
+            drawPath(starPath(cx - 12f, y + 7f, 7f), goldColor, style = Stroke(width = 1.8f))
+            drawPath(starPath(cx + 12f, y + 7f, 7f), goldColor, style = Stroke(width = 1.8f))
+            val bridge = Path().apply { moveTo(cx - 5f, y + 7f); lineTo(cx + 5f, y + 7f) }
+            drawPath(bridge, goldColor, style = Stroke(width = 1.8f))
+        }
     }
 }
 

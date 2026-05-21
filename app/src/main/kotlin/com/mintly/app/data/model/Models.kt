@@ -172,13 +172,15 @@ val DEFAULT_ROULETTE_SEGMENTS = listOf(
 )
 
 val DEFAULT_COSTUMES = listOf(
-    Costume("hat_crown",    "hat",    "왕관",    800, "legendary", "👑", isSpecial = true),
-    Costume("hat_cap",      "hat",    "캡 모자", 200, "common",    "🧢"),
-    Costume("hat_bunny",    "hat",    "토끼 귀", 300, "rare",      "🐰"),
-    Costume("hat_flower",   "hat",    "꽃 화관", 450, "epic",      "🌸"),
-    Costume("hat_beanie",   "hat",    "비니",    250, "common",    "🧶"),
-    Costume("outfit_hoodie","outfit", "후드티",  400, "rare",      "🧥"),
-    Costume("outfit_suit",  "outfit", "정장",    600, "epic",      "👔"),
-    Costume("outfit_casual","outfit", "캐주얼",  350, "common",    "👕"),
-    Costume("outfit_beggar","outfit", "거지옷",    0, "common",    "🧺", isSpecial = true),
+    Costume("hat_crown",      "hat",    "왕관",      800, "legendary", "👑", isSpecial = true),
+    Costume("hat_cap",        "hat",    "캡 모자",   200, "common",    "🧢"),
+    Costume("hat_bunny",      "hat",    "토끼 귀",   300, "rare",      "🐰"),
+    Costume("hat_flower",     "hat",    "꽃 화관",   450, "epic",      "🌸"),
+    Costume("hat_beanie",     "hat",    "비니",      250, "common",    "🧶"),
+    Costume("outfit_hoodie",  "outfit", "후드티",    400, "rare",      "🧥"),
+    Costume("outfit_suit",    "outfit", "정장",      600, "epic",      "👔"),
+    Costume("outfit_casual",  "outfit", "캐주얼",    350, "common",    "👕"),
+    Costume("outfit_beggar",  "outfit", "거지옷",      0, "common",    "🧺", isSpecial = true),
+    Costume("outfit_sports",  "outfit", "스포츠웨어", 380, "common",   "🏃"),
+    Costume("outfit_hanbok",  "outfit", "한복",      700, "epic",      "👘"),
 )

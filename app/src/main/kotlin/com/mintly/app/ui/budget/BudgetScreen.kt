@@ -19,10 +19,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mintly.app.data.model.Favorite
 import com.mintly.app.data.model.Transaction
 import com.mintly.app.ui.components.*
 import com.mintly.app.ui.theme.거지방Colors
 import com.mintly.app.ui.theme.Shape14
+import com.mintly.app.ui.theme.ShapePill
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -31,10 +33,11 @@ import java.util.Locale
 
 @Composable
 fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
-    val state      by vm.uiState.collectAsStateWithLifecycle()
-    var showAddSheet  by remember { mutableStateOf(false) }
-    var selectedDate  by remember { mutableStateOf<LocalDate?>(null) }
-    val txByDate      = remember(state.transactions) { vm.transactionsByDate() }
+    val state           by vm.uiState.collectAsStateWithLifecycle()
+    var showAddSheet    by remember { mutableStateOf(false) }
+    var showFavSheet    by remember { mutableStateOf(false) }
+    var selectedDate    by remember { mutableStateOf<LocalDate?>(null) }
+    val txByDate        = remember(state.transactions) { vm.transactionsByDate() }
 
     // 선택된 날짜로 필터링
     val filteredTxByDate = remember(txByDate, selectedDate) {
@@ -67,38 +70,54 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
             item {
                 Column(modifier = Modifier.fillMaxWidth().background(Color.White)) {
 
-                    // 월 이동 네비게이터 (중앙 정렬)
-                    Row(
+                    // 월 이동 네비게이터 (중앙 정렬 + 오른쪽 별 버튼)
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 4.dp, vertical = 16.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
+                            .padding(horizontal = 4.dp, vertical = 12.dp),
                     ) {
-                        IconButton(
-                            onClick = {
-                                val ym = YearMonth.of(state.year, state.month).minusMonths(1)
-                                vm.changeMonth(ym.year, ym.monthValue)
-                            },
-                            modifier = Modifier.size(40.dp),
+                        Row(
+                            modifier = Modifier.align(Alignment.Center),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Icon(Icons.Rounded.ChevronLeft, null, tint = 거지방Colors.Gray600)
+                            IconButton(
+                                onClick = {
+                                    val ym = YearMonth.of(state.year, state.month).minusMonths(1)
+                                    vm.changeMonth(ym.year, ym.monthValue)
+                                },
+                                modifier = Modifier.size(40.dp),
+                            ) {
+                                Icon(Icons.Rounded.ChevronLeft, null, tint = 거지방Colors.Gray600)
+                            }
+                            Text(
+                                text = "${state.year}년 ${state.month}월",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = 거지방Colors.Gray900,
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                            )
+                            IconButton(
+                                onClick = {
+                                    val ym = YearMonth.of(state.year, state.month).plusMonths(1)
+                                    vm.changeMonth(ym.year, ym.monthValue)
+                                },
+                                modifier = Modifier.size(40.dp),
+                            ) {
+                                Icon(Icons.Rounded.ChevronRight, null, tint = 거지방Colors.Gray600)
+                            }
                         }
-                        Text(
-                            text = "${state.year}년 ${state.month}월",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = 거지방Colors.Gray900,
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                        )
+                        // 즐겨찾기 빠른 추가 버튼
                         IconButton(
-                            onClick = {
-                                val ym = YearMonth.of(state.year, state.month).plusMonths(1)
-                                vm.changeMonth(ym.year, ym.monthValue)
-                            },
-                            modifier = Modifier.size(40.dp),
+                            onClick = { showFavSheet = true },
+                            modifier = Modifier.align(Alignment.CenterEnd).size(44.dp),
                         ) {
-                            Icon(Icons.Rounded.ChevronRight, null, tint = 거지방Colors.Gray600)
+                            Icon(
+                                Icons.Rounded.Star,
+                                contentDescription = "즐겨찾기 빠른 추가",
+                                tint = if (state.favorites.isEmpty()) 거지방Colors.Gray300 else 거지방Colors.Coin,
+                                modifier = Modifier.size(24.dp),
+                            )
                         }
                     }
 
@@ -268,6 +287,16 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
             onDismiss  = { showAddSheet = false },
         )
     }
+
+    if (showFavSheet) {
+        QuickFavoritesSheet(
+            favorites   = state.favorites,
+            date        = selectedDate ?: LocalDate.now(),
+            onAdd       = { tx -> vm.addTransaction(tx) },
+            onDismiss   = { showFavSheet = false },
+            onOpenFull  = { showFavSheet = false; showAddSheet = true },
+        )
+    }
 }
 
 // ─── 월 요약 칼럼 ─────────────────────────────────────────
@@ -422,7 +451,7 @@ private fun CalendarDayCell(
         ) {
             Text(
                 "$day",
-                style      = MaterialTheme.typography.labelMedium,
+                fontSize   = 13.sp,
                 color      = dayNumColor,
                 fontWeight = if (highlight) FontWeight.Bold else FontWeight.Normal,
             )
@@ -434,28 +463,191 @@ private fun CalendarDayCell(
         if (income > 0) {
             Text(
                 text      = "+${calendarAmtFmt(income)}",
-                fontSize  = 8.sp,
+                fontSize  = 9.sp,
                 color     = 거지방Colors.Income,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
-                lineHeight = 10.sp,
+                lineHeight = 11.sp,
                 maxLines  = 1,
             )
         } else {
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(11.dp))
         }
 
         // 지출 (주황/빨강)
         if (expense > 0) {
             Text(
                 text      = "-${calendarAmtFmt(expense)}",
-                fontSize  = 8.sp,
+                fontSize  = 9.sp,
                 color     = 거지방Colors.Expense,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
-                lineHeight = 10.sp,
+                lineHeight = 11.sp,
                 maxLines  = 1,
             )
+        }
+    }
+}
+
+// ─── 즐겨찾기 빠른 추가 시트 ─────────────────────────────
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun QuickFavoritesSheet(
+    favorites: List<Favorite>,
+    date: LocalDate,
+    onAdd: (Transaction) -> Unit,
+    onDismiss: () -> Unit,
+    onOpenFull: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var selectedKind by remember { mutableStateOf("expense") }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Color.White,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(bottom = 16.dp),
+        ) {
+            // 헤더
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 4.dp, bottom = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column {
+                    Text("즐겨찾기 빠른 추가", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    val dow = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.KOREAN)
+                    Text(
+                        "${date.monthValue}월 ${date.dayOfMonth}일 ($dow)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = 거지방Colors.Gray400,
+                    )
+                }
+                TextButton(onClick = onOpenFull) {
+                    Text("직접 입력", style = MaterialTheme.typography.labelMedium, color = 거지방Colors.Mint500)
+                }
+            }
+            HorizontalDivider(color = 거지방Colors.Gray100)
+
+            // 종류 탭
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .clip(ShapePill)
+                    .background(거지방Colors.Gray100)
+                    .padding(4.dp),
+            ) {
+                listOf("expense" to "지출", "income" to "수입").forEach { (id, label) ->
+                    val active = selectedKind == id
+                    val aColor = if (id == "expense") 거지방Colors.Expense else 거지방Colors.Income
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(ShapePill)
+                            .background(if (active) Color.White else Color.Transparent)
+                            .clickable { selectedKind = id }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = if (active) FontWeight.Bold else FontWeight.Normal, color = if (active) aColor else 거지방Colors.Gray500)
+                    }
+                }
+            }
+
+            val filtered = favorites.filter { it.kind == selectedKind }
+
+            if (filtered.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(120.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text("⭐", fontSize = 28.sp)
+                        Text("즐겨찾기가 없습니다", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400)
+                        TextButton(onClick = onOpenFull) {
+                            Text("직접 추가하기", color = 거지방Colors.Mint500, style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 360.dp),
+                ) {
+                    items(filtered) { fav ->
+                        val hasAmount = fav.amount != null && fav.amount > 0
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (hasAmount) {
+                                        onAdd(
+                                            Transaction(
+                                                kind        = fav.kind,
+                                                categoryId  = fav.categoryId,
+                                                amount      = fav.amount!!,
+                                                memo        = fav.memo,
+                                                occurredOn  = date.format(DateTimeFormatter.ISO_LOCAL_DATE),
+                                                category    = fav.category,
+                                            )
+                                        )
+                                        onDismiss()
+                                    }
+                                }
+                                .padding(horizontal = 20.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            val accentColor = if (fav.kind == "expense") 거지방Colors.Expense else 거지방Colors.Income
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.size(44.dp).clip(Shape14).background(accentColor.copy(alpha = 0.1f)),
+                            ) {
+                                Text(getCategoryEmoji(fav.category?.icon ?: ""), fontSize = 20.sp)
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    fav.category?.name ?: "미분류",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = 거지방Colors.Gray900,
+                                )
+                                val detail = buildString {
+                                    fav.amount?.let { append("%,d원".format(it)) }
+                                    fav.memo?.takeIf { it.isNotBlank() }?.let { if (isNotEmpty()) append(" · "); append(it) }
+                                }
+                                if (detail.isNotBlank()) Text(detail, style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400)
+                                if (!hasAmount) Text("금액 미설정 — 직접 입력 필요", style = MaterialTheme.typography.labelSmall, color = 거지방Colors.Warning)
+                            }
+                            if (hasAmount) {
+                                Surface(shape = ShapePill, color = accentColor.copy(alpha = 0.1f)) {
+                                    Text(
+                                        if (fav.kind == "expense") "-${"%,d".format(fav.amount!!)}원" else "+${"%,d".format(fav.amount!!)}원",
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = accentColor,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                            } else {
+                                Icon(Icons.Rounded.Edit, null, tint = 거지방Colors.Gray300, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                        HorizontalDivider(modifier = Modifier.padding(start = 76.dp), color = 거지방Colors.Gray100, thickness = 0.5.dp)
+                    }
+                }
+            }
         }
     }
 }
@@ -494,13 +686,13 @@ private fun DateHeader(date: String, txList: List<Transaction>) {
     ) {
         Text(
             fmt,
-            style      = MaterialTheme.typography.labelMedium,
+            style      = MaterialTheme.typography.bodySmall,
             color      = 거지방Colors.Gray600,
             fontWeight = FontWeight.SemiBold,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            if (income  > 0) Text("+%,d원".format(income),  style = MaterialTheme.typography.labelSmall, color = 거지방Colors.Income,  fontWeight = FontWeight.SemiBold)
-            if (expense > 0) Text("-%,d원".format(expense), style = MaterialTheme.typography.labelSmall, color = 거지방Colors.Expense, fontWeight = FontWeight.SemiBold)
+            if (income  > 0) Text("+%,d원".format(income),  style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Income,  fontWeight = FontWeight.SemiBold)
+            if (expense > 0) Text("-%,d원".format(expense), style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Expense, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -535,15 +727,15 @@ private fun TransactionRow(tx: Transaction, onDelete: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     tx.memo?.takeIf { it.isNotBlank() } ?: tx.category?.name ?: "기타",
-                    style      = MaterialTheme.typography.bodyMedium,
+                    style      = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     color      = 거지방Colors.Gray900,
                 )
                 if (tx.category != null) {
-                    Text(tx.category.name, style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400)
+                    Text(tx.category.name, style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400, fontSize = 12.sp)
                 }
             }
-            AmountText(amount = tx.amount, kind = tx.kind, style = MaterialTheme.typography.bodyMedium)
+            AmountText(amount = tx.amount, kind = tx.kind, style = MaterialTheme.typography.bodyLarge)
         }
         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
             DropdownMenuItem(
