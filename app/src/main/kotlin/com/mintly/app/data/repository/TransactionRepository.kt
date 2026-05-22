@@ -21,7 +21,7 @@ class TransactionRepository @Inject constructor(
 
     // ── 거래 내역 ──────────────────────────────────────────────
 
-    suspend fun getTransactionsForMonth(year: Int, month: Int): List<Transaction> {
+    suspend fun getTransactionsForMonth(year: Int, month: Int, groupId: String? = null): List<Transaction> {
         val uid = client.auth.currentUserOrNull()?.id ?: return emptyList()
         val from = "%04d-%02d-01".format(year, month)
         val to   = "%04d-%02d-01".format(if (month == 12) year + 1 else year, if (month == 12) 1 else month + 1)
@@ -32,6 +32,7 @@ class TransactionRepository @Inject constructor(
                         eq("user_id", uid)
                         gte("occurred_on", from)
                         lt("occurred_on", to)
+                        groupId?.let { eq("group_id", it) }
                     }
                     order("occurred_on", Order.DESCENDING)
                 }

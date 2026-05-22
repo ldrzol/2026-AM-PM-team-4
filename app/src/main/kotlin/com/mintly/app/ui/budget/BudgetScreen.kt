@@ -3,6 +3,7 @@ package com.mintly.app.ui.budget
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -34,6 +35,7 @@ import java.util.Locale
 
 private val KOREA_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
     val state           by vm.uiState.collectAsStateWithLifecycle()
@@ -130,6 +132,40 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
                     val net     = income - expense
 
                     HorizontalDivider(color = 거지방Colors.Gray100)
+
+                    if (state.groups.isNotEmpty()) {
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            items(state.groups, key = { it.id }) { group ->
+                                val selected = group.id == state.selectedGroupId
+                                FilterChip(
+                                    selected = selected,
+                                    onClick = { vm.selectGroup(group.id) },
+                                    label = {
+                                        Text(
+                                            "${group.emoji} ${group.name}",
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                        )
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = 거지방Colors.Mint400,
+                                        selectedLabelColor = Color.White,
+                                    ),
+                                )
+                            }
+                        }
+                        Text(
+                            "선택한 방 기준으로 수입·지출이 랭킹에 반영돼요",
+                            modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 8.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = 거지방Colors.Gray400,
+                        )
+                        HorizontalDivider(color = 거지방Colors.Gray100)
+                    }
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

@@ -1,39 +1,37 @@
-// Supabase Edge Function — 매일 자정 KST 정산 실행
-// 배포: supabase functions deploy settle-daily
-// 스케줄: 대시보드 > Database > Cron > "5 15 * * *" (KST 00:05)
+// Run after 04:00 KST to settle the previous ranking day.
+// Deploy: supabase functions deploy settle-daily
+// Cron example: "5 19 * * *" UTC = 04:05 KST
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-Deno.serve(async (req) => {
+Deno.serve(async () => {
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // 어제 날짜 (KST = UTC+9)
     const now = new Date();
-    now.setHours(now.getHours() + 9); // UTC → KST
-    now.setDate(now.getDate() - 1);
-    const yesterday = now.toISOString().split("T")[0];
+    const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+    kstNow.setDate(kstNow.getDate() - 1);
+    const targetDate = kstNow.toISOString().split("T")[0];
 
     const { error } = await supabase.rpc("settle_daily_rankings", {
-      target_date: yesterday,
+      target_date: targetDate,
     });
 
     if (error) {
-      console.error("정산 오류:", error);
+      console.error("settle_daily_rankings failed:", error);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    console.log(`✅ ${yesterday} 정산 완료`);
-    return new Response(
-      JSON.stringify({ success: true, date: yesterday }),
-      { headers: { "Content-Type": "application/json" } }
-    );
+    console.log(`settled ranking date ${targetDate}`);
+    return new Response(JSON.stringify({ success: true, date: targetDate }), {
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (e) {
     console.error(e);
     return new Response(JSON.stringify({ error: String(e) }), {

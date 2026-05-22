@@ -10,6 +10,7 @@ import com.mintly.app.data.repository.GroupRepository
 import com.mintly.app.data.repository.RankingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +35,7 @@ class RankingViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(RankingUiState())
     val uiState: StateFlow<RankingUiState> = _uiState.asStateFlow()
+    private var realtimeJob: Job? = null
 
     init {
         loadGroups()
@@ -44,25 +46,49 @@ class RankingViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
             val myUserId = authRepo.currentUserId()
             val groups = groupRepo.getMyGroups()
-            val firstGroupId = _uiState.value.selectedGroupId ?: groups.firstOrNull()?.id
+            var groupWithMostMembers: FriendGroup? = null
+            var mostMembers = -1
+            val memberCounts = mutableMapOf<String, Int>()
+            for (group in groups) {
+                val memberCount = rankingRepo.getTodayRankingMemberCount(group.id)
+                memberCounts[group.id] = memberCount
+                if (memberCount > mostMembers) {
+                    groupWithMostMembers = group
+                    mostMembers = memberCount
+                }
+            }
+            val previousGroupId = _uiState.value.selectedGroupId
+                ?.takeIf { selectedId -> groups.any { it.id == selectedId } }
+            val previousMemberCount = previousGroupId?.let { memberCounts[it] } ?: 0
+            val selectedGroupId = if (previousGroupId != null && previousMemberCount >= mostMembers) {
+                previousGroupId
+            } else {
+                groupWithMostMembers?.id
+            }
             _uiState.value = _uiState.value.copy(
                 groups = groups,
-                selectedGroupId = firstGroupId,
+                selectedGroupId = selectedGroupId,
                 isLoading = false,
                 myUserId = myUserId,
             )
-            firstGroupId?.let { loadRanking(it) }
+            selectedGroupId?.let {
+                loadRanking(it)
+                startRealtime(it)
+            }
         }
     }
 
     fun selectGroup(groupId: String) {
         _uiState.value = _uiState.value.copy(selectedGroupId = groupId)
         loadRanking(groupId)
+        startRealtime(groupId)
     }
 
-    fun loadRanking(groupId: String) {
+    fun loadRanking(groupId: String, showLoading: Boolean = true) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            if (showLoading) {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+            }
             val rankings = rankingRepo.getTodayRanking(groupId)
             _uiState.value = _uiState.value.copy(rankings = rankings, isLoading = false)
         }
@@ -77,12 +103,22 @@ class RankingViewModel @Inject constructor(
     }
 
     fun startRealtime() {
-        viewModelScope.launch {
-            val groupId = _uiState.value.selectedGroupId ?: return@launch
+        val groupId = _uiState.value.selectedGroupId ?: return
+        startRealtime(groupId)
+    }
+
+    private fun startRealtime(groupId: String) {
+        realtimeJob?.cancel()
+        realtimeJob = viewModelScope.launch {
             rankingRepo.anyRankingChange(groupId).collect {
                 delay(300)
                 loadRanking(groupId)
             }
         }
+    }
+
+    override fun onCleared() {
+        realtimeJob?.cancel()
+        super.onCleared()
     }
 }

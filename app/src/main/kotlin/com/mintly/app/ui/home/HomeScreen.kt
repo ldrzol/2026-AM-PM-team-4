@@ -42,6 +42,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +61,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mintly.app.data.model.Profile
 import com.mintly.app.data.model.UserCostume
@@ -84,6 +88,15 @@ fun HomeScreen(
     val state by vm.uiState.collectAsStateWithLifecycle()
     var showCustomizeSheet by remember { mutableStateOf(false) }
     var today by remember { mutableStateOf(LocalDate.now(KOREA_ZONE)) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) vm.load()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     LaunchedEffect(Unit) {
         vm.load()
@@ -220,10 +233,13 @@ fun HomeScreen(
 
 @Composable
 private fun Header(profile: Profile?, modifier: Modifier = Modifier) {
+    val nickname = profile?.displayName?.takeIf { it.isNotBlank() }
+        ?: profile?.username?.takeIf { it.isNotBlank() }
+        ?: "사용자"
     Box(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.align(Alignment.CenterStart).padding(end = 118.dp)) {
             Text(
-                "안녕, ${profile?.displayName?.takeIf { it.isNotBlank() } ?: ""}님",
+                "안녕, ${nickname}님",
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color(0xFF65727C),
             )

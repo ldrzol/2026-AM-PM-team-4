@@ -86,6 +86,15 @@ class GroupRepository @Inject constructor(
             .decodeList<GroupMember>()
     }.getOrElse { emptyList() }
 
+    suspend fun getGroupMemberCount(groupId: String): Int = runCatching {
+        client.from("group_members")
+            .select {
+                filter { eq("group_id", groupId) }
+            }
+            .decodeList<GroupMember>()
+            .size
+    }.getOrElse { 0 }
+
     suspend fun leaveGroup(groupId: String): Result<Unit> = runCatching {
         val uid = client.auth.currentUserOrNull()?.id ?: error("Not logged in")
         client.from("group_members").delete {

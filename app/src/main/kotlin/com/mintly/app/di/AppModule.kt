@@ -42,8 +42,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideRankingRepository(supabase: SupabaseManager): RankingRepository =
-        RankingRepository(supabase)
+    fun provideRankingRepository(
+        supabase: SupabaseManager,
+        groupRepo: GroupRepository,
+    ): RankingRepository =
+        RankingRepository(supabase, groupRepo)
 
     @Provides
     @Singleton

@@ -42,6 +42,9 @@ import com.mintly.app.ui.theme.Shape14
 import com.mintly.app.ui.theme.Shape20
 import com.mintly.app.ui.theme.ShapePill
 
+private fun Profile.nickname(fallback: String = "친구"): String =
+    displayName.ifBlank { username.ifBlank { fallback } }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RankingScreen(vm: RankingViewModel = hiltViewModel()) {
@@ -59,6 +62,13 @@ fun RankingScreen(vm: RankingViewModel = hiltViewModel()) {
     }
 
     LaunchedEffect(Unit) { vm.startRealtime() }
+    LaunchedEffect(state.selectedGroupId) {
+        val groupId = state.selectedGroupId ?: return@LaunchedEffect
+        while (true) {
+            kotlinx.coroutines.delay(5_000)
+            vm.loadRanking(groupId, showLoading = false)
+        }
+    }
 
     val selectedGroup    = state.groups.find { it.id == state.selectedGroupId }
     val activeRankings   = state.rankings.filter { !it.isNotEntered }
@@ -143,6 +153,16 @@ fun RankingScreen(vm: RankingViewModel = hiltViewModel()) {
                     )
                 }
 
+                if (state.rankings.isNotEmpty()) {
+                    item {
+                        RoomProfilesStrip(
+                            members = state.rankings,
+                            myUserId = state.myUserId,
+                            onClick = { vm.selectFriend(it.profile) },
+                        )
+                    }
+                }
+
                 // ─── 순위 리스트 (활성) ───────────────────────
                 items(activeRankings, key = { it.profile.id + "_active" }) { ranked ->
                     RankedRow(
@@ -152,7 +172,7 @@ fun RankingScreen(vm: RankingViewModel = hiltViewModel()) {
                     )
                 }
 
-                // ─── 미입력 구분선 ────────────────────────────
+                // ─── 순위권 밖 멤버 ────────────────────────────
                 if (inactiveRankings.isNotEmpty()) {
                     item {
                         Row(
@@ -163,7 +183,7 @@ fun RankingScreen(vm: RankingViewModel = hiltViewModel()) {
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             HorizontalDivider(modifier = Modifier.weight(1f), color = 거지방Colors.Gray200)
-                            Text("미입력", style = MaterialTheme.typography.labelSmall, color = 거지방Colors.Gray400, fontWeight = FontWeight.SemiBold)
+                            Text("순위권 밖", style = MaterialTheme.typography.labelSmall, color = 거지방Colors.Gray400, fontWeight = FontWeight.SemiBold)
                             HorizontalDivider(modifier = Modifier.weight(1f), color = 거지방Colors.Gray200)
                         }
                     }
@@ -337,7 +357,7 @@ private fun PodiumColumn(
             }
             Spacer(Modifier.height(6.dp))
             Text(
-                member.profile.displayName,
+                member.profile.nickname(),
                 style     = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.SemiBold,
                 color     = 거지방Colors.Gray800,
@@ -414,6 +434,71 @@ private fun GroupInfoRow(group: FriendGroup, memberCount: Int, onInvite: () -> U
     HorizontalDivider(color = 거지방Colors.Gray100)
 }
 
+@Composable
+private fun RoomProfilesStrip(
+    members: List<RankedMember>,
+    myUserId: String?,
+    onClick: (RankedMember) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp, bottom = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            "방 친구",
+            modifier = Modifier.padding(horizontal = 20.dp),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = 거지방Colors.Gray500,
+        )
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(members, key = { it.profile.id + "_profile" }) { member ->
+                val isMe = member.profile.id == myUserId
+                val name = member.profile.nickname()
+
+                Column(
+                    modifier = Modifier
+                        .width(64.dp)
+                        .clickable { onClick(member) },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(5.dp),
+                ) {
+                    Box(contentAlignment = Alignment.BottomEnd) {
+                        MiniAvatar(
+                            size = 48.dp,
+                            color = member.profile.avatarColor,
+                            face = member.profile.avatarFace.toAvatarFace(),
+                            hat = if (member.profile.hasCrownUntil != null) "crown" else member.profile.currentHat,
+                            outfit = member.profile.forcedOutfit ?: member.profile.currentOutfit,
+                        )
+                        if (member.isNotEntered) {
+                            Surface(
+                                modifier = Modifier.size(14.dp),
+                                shape = CircleShape,
+                                color = 거지방Colors.Gray300,
+                                border = BorderStroke(2.dp, Color.White),
+                            ) {}
+                        }
+                    }
+                    Text(
+                        if (isMe) "나" else name,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (member.isNotEntered) 거지방Colors.Gray400 else 거지방Colors.Gray700,
+                        fontWeight = if (isMe) FontWeight.Bold else FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+    }
+}
+
 // ─── 순위 행 ──────────────────────────────────────────────
 @Composable
 private fun RankedRow(ranked: RankedMember, isMe: Boolean, onClick: () -> Unit) {
@@ -484,7 +569,7 @@ private fun RankedRow(ranked: RankedMember, isMe: Boolean, onClick: () -> Unit) 
                     horizontalArrangement = Arrangement.spacedBy(5.dp),
                 ) {
                     Text(
-                        ranked.profile.displayName,
+                        ranked.profile.nickname(),
                         style      = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         color      = if (isNotEntered) 거지방Colors.Gray400 else 거지방Colors.Gray900,
@@ -504,7 +589,7 @@ private fun RankedRow(ranked: RankedMember, isMe: Boolean, onClick: () -> Unit) 
                     }
                 }
                 Text(
-                    if (isNotEntered) "미입력" else "오늘 지출",
+                    if (isNotEntered) "방 멤버 · 수익 미입력" else "오늘 지출",
                     style = MaterialTheme.typography.bodySmall,
                     color = 거지방Colors.Gray400,
                 )
@@ -678,8 +763,10 @@ private fun FriendProfileDialog(
                 )
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(profile.displayName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("@${profile.username}", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray500)
+                    Text(profile.nickname(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    if (profile.username.isNotBlank()) {
+                        Text("@${profile.username}", style = MaterialTheme.typography.bodyMedium, color = 거지방Colors.Gray500)
+                    }
                 }
 
                 if (rankedMember != null) {
@@ -695,8 +782,13 @@ private fun FriendProfileDialog(
                             verticalArrangement   = Arrangement.spacedBy(8.dp),
                         ) {
                             if (rankedMember.isNotEntered) {
-                                Text("오늘 거래 없음", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400)
-                                Text("─", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray300)
+                                Text("방 멤버 · 순위권 밖", style = MaterialTheme.typography.bodySmall, color = 거지방Colors.Gray400)
+                                Text("수익 미입력", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = 거지방Colors.Gray500)
+                                Text(
+                                    "수익 %,d원 → 지출 %,d원".format(rankedMember.incomeAmount, rankedMember.spentAmount),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = 거지방Colors.Gray400,
+                                )
                             } else {
                                 val pct = if (rankedMember.incomeAmount > 0)
                                     (rankedMember.spentAmount.toDouble() / rankedMember.incomeAmount * 100).toInt()

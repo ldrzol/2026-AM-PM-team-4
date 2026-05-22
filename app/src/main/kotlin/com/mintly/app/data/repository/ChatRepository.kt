@@ -2,6 +2,7 @@ package com.mintly.app.data.repository
 
 import com.mintly.app.data.model.ChatMessage
 import com.mintly.app.data.model.ChatRoom
+import com.mintly.app.data.model.Profile
 import com.mintly.app.data.supabase.SupabaseManager
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
@@ -48,16 +49,56 @@ class ChatRepository @Inject constructor(
             .first()
     }
 
-    suspend fun getMessages(roomId: String, limit: Int = 50): List<ChatMessage> = runCatching {
-        client.from("chat_messages")
-            .select(Columns.raw("*, profile:profiles(id, display_name, avatar_color, avatar_face, current_hat, current_outfit, has_crown_until)")) {
-                filter { eq("room_id", roomId) }
-                order("created_at", Order.DESCENDING)
-                limit(limit.toLong())
-            }
-            .decodeList<ChatMessage>()
-            .reversed()
-    }.getOrElse { emptyList() }
+    suspend fun getMessages(roomId: String, limit: Int = 50): List<ChatMessage> {
+        val messages = runCatching {
+            client.from("chat_messages")
+                .select(Columns.raw("*, profile:profiles(*)")) {
+                    filter { eq("room_id", roomId) }
+                    order("created_at", Order.DESCENDING)
+                    limit(limit.toLong())
+                }
+                .decodeList<ChatMessage>()
+                .reversed()
+        }.getOrElse {
+            getMessagesWithoutProfiles(roomId, limit)
+        }
+
+        return withProfileFallbacks(messages)
+    }
+
+    private suspend fun getMessagesWithoutProfiles(roomId: String, limit: Int): List<ChatMessage> =
+        runCatching {
+            client.from("chat_messages")
+                .select {
+                    filter { eq("room_id", roomId) }
+                    order("created_at", Order.DESCENDING)
+                    limit(limit.toLong())
+                }
+                .decodeList<ChatMessage>()
+                .reversed()
+        }.getOrElse { emptyList() }
+
+    private suspend fun withProfileFallbacks(messages: List<ChatMessage>): List<ChatMessage> {
+        val result = mutableListOf<ChatMessage>()
+        for (message in messages) {
+            result += message.withProfileFallback()
+        }
+        return result
+    }
+
+    private suspend fun ChatMessage.withProfileFallback(): ChatMessage =
+        if (profile != null) {
+            this
+        } else {
+            copy(profile = getProfile(userId) ?: Profile(id = userId, username = "friend", displayName = "친구"))
+        }
+
+    private suspend fun getProfile(userId: String): Profile? =
+        runCatching {
+            client.from("profiles")
+                .select { filter { eq("id", userId) } }
+                .decodeSingleOrNull<Profile>()
+        }.getOrNull()
 
     suspend fun sendMessage(roomId: String, content: String): Result<Unit> = runCatching {
         val uid = client.auth.currentUserOrNull()?.id ?: error("Not logged in")

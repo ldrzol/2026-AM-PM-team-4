@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mintly.app.data.model.Category
 import com.mintly.app.data.model.Favorite
+import com.mintly.app.data.model.FriendGroup
 import com.mintly.app.data.model.Transaction
 import com.mintly.app.data.repository.GroupRepository
 import com.mintly.app.data.repository.TransactionRepository
@@ -24,6 +25,7 @@ data class BudgetUiState(
     val transactions: List<Transaction> = emptyList(),
     val categories: List<Category> = emptyList(),
     val favorites: List<Favorite> = emptyList(),
+    val groups: List<FriendGroup> = emptyList(),
     val selectedGroupId: String? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -47,24 +49,37 @@ class BudgetViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             val state = _uiState.value
-            val txList = txRepo.getTransactionsForMonth(state.year, state.month)
             val cats   = txRepo.getCategories()
             val favs   = txRepo.getFavorites()
             val groups = groupRepo.getMyGroups()
+            val selectedGroupId = state.selectedGroupId
+                ?.takeIf { selectedId -> groups.any { it.id == selectedId } }
+                ?: groups.firstOrNull()?.id
+            val txList = txRepo.getTransactionsForMonth(state.year, state.month, selectedGroupId)
             _uiState.value = _uiState.value.copy(
                 transactions = txList,
                 categories   = cats,
                 favorites    = favs,
-                selectedGroupId = _uiState.value.selectedGroupId ?: groups.firstOrNull()?.id,
+                groups       = groups,
+                selectedGroupId = selectedGroupId,
                 isLoading    = false,
             )
+        }
+    }
+
+    fun selectGroup(groupId: String) {
+        _uiState.value = _uiState.value.copy(selectedGroupId = groupId)
+        viewModelScope.launch {
+            val state = _uiState.value
+            val txList = txRepo.getTransactionsForMonth(state.year, state.month, groupId)
+            _uiState.value = _uiState.value.copy(transactions = txList)
         }
     }
 
     fun changeMonth(year: Int, month: Int) {
         _uiState.value = _uiState.value.copy(year = year, month = month)
         viewModelScope.launch {
-            val txList = txRepo.getTransactionsForMonth(year, month)
+            val txList = txRepo.getTransactionsForMonth(year, month, _uiState.value.selectedGroupId)
             _uiState.value = _uiState.value.copy(transactions = txList)
         }
     }

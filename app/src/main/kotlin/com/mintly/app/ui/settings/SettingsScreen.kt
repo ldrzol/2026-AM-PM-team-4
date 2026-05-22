@@ -29,11 +29,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.content.Intent
 import com.mintly.app.data.model.Category
 import com.mintly.app.data.model.Favorite
 import com.mintly.app.data.model.FriendGroup
+import com.mintly.app.data.model.Profile
 import com.mintly.app.ui.components.*
 import com.mintly.app.ui.home.toAvatarFace
 import com.mintly.app.ui.theme.거지방Colors
@@ -41,6 +45,9 @@ import com.mintly.app.ui.theme.Shape10
 import com.mintly.app.ui.theme.Shape14
 import com.mintly.app.ui.theme.Shape20
 import com.mintly.app.ui.theme.ShapePill
+
+private fun Profile.nickname(fallback: String = "사용자"): String =
+    displayName.ifBlank { username.ifBlank { fallback } }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +69,16 @@ fun SettingsScreen(
 
     var alertEnabled by remember { mutableStateOf(false) }
     var alertAmount  by remember { mutableStateOf("") }
+    val profileNickname = state.profile?.nickname() ?: "사용자"
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) vm.load()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     LaunchedEffect(state.error, state.successMsg) {
         if (state.error != null || state.successMsg != null) {
@@ -85,40 +102,39 @@ fun SettingsScreen(
                     .background(Color(0xFFEAF8F5))
                     .padding(horizontal = 32.dp, vertical = 32.dp),
             ) {
-                state.profile?.let { profile ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(22.dp),
+                val profile = state.profile
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(22.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(116.dp)
+                            .clip(CircleShape)
+                            .background(Color.White),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(116.dp)
-                                .clip(CircleShape)
-                                .background(Color.White),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            거지방Avatar(
-                                size   = 82.dp,
-                                color  = profile.avatarColor,
-                                face   = profile.avatarFace.toAvatarFace(),
-                                hat    = if (profile.hasCrownUntil != null) "crown" else profile.currentHat,
-                                outfit = profile.forcedOutfit ?: profile.currentOutfit,
-                                forced = profile.forcedOutfit != null,
-                            )
-                        }
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(2.dp),
-                        ) {
-                            Text(
-                                profile.displayName.ifBlank { profile.username.ifBlank { "사용자" } },
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.Black,
-                            )
-                        }
-                        SettingsCoinChip(amount = profile.coins)
+                        거지방Avatar(
+                            size = 82.dp,
+                            color = profile?.avatarColor ?: "mint",
+                            face = profile?.avatarFace.toAvatarFace(),
+                            hat = if (profile?.hasCrownUntil != null) "crown" else profile?.currentHat,
+                            outfit = profile?.forcedOutfit ?: profile?.currentOutfit,
+                            forced = profile?.forcedOutfit != null,
+                        )
                     }
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        Text(
+                            profileNickname,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.Black,
+                        )
+                    }
+                    SettingsCoinChip(amount = profile?.coins ?: 0)
                 }
             }
 
@@ -132,7 +148,7 @@ fun SettingsScreen(
                     iconBg    = 거지방Colors.Mint100,
                     iconColor = 거지방Colors.Mint600,
                     title     = "프로필 수정",
-                    subtitle  = "닉네임",
+                    subtitle  = profileNickname,
                     onClick   = { showEditName = true },
                 )
                 RowDivider()
@@ -278,7 +294,7 @@ fun SettingsScreen(
     // ─── 다이얼로그 / 시트 ─────────────────────────────────────
     if (showEditName) {
         EditNameDialog(
-            current   = state.profile?.displayName ?: "",
+            current   = profileNickname,
             onSave    = { vm.updateDisplayName(it); showEditName = false },
             onDismiss = { showEditName = false },
         )

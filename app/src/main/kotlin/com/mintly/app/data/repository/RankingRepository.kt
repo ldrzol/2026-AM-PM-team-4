@@ -1,14 +1,11 @@
 package com.mintly.app.data.repository
 
-import com.mintly.app.data.model.DailyRanking
 import com.mintly.app.data.model.GroupMember
 import com.mintly.app.data.model.Profile
 import com.mintly.app.data.model.RankedMember
 import com.mintly.app.data.supabase.SupabaseManager
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.FilterOperation
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.realtime.PostgresAction
@@ -21,136 +18,122 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private val KOREA_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
+
 @Serializable
-private data class MemberSpending(
-    @SerialName("user_id")       val userId: String,
-    @SerialName("spent_amount")  val spentAmount: Long,
-    @SerialName("income_amount") val incomeAmount: Long,
+private data class RankingMemberRow(
+    @SerialName("user_id") val userId: String,
+    val username: String? = null,
+    @SerialName("display_name") val displayName: String? = null,
+    @SerialName("avatar_seed") val avatarSeed: String? = null,
+    @SerialName("avatar_color") val avatarColor: String? = null,
+    @SerialName("avatar_face") val avatarFace: Map<String, String>? = null,
+    val email: String? = null,
+    val coins: Int? = null,
+    val phone: String? = null,
+    @SerialName("current_hat") val currentHat: String? = null,
+    @SerialName("current_outfit") val currentOutfit: String? = null,
+    @SerialName("forced_outfit") val forcedOutfit: String? = null,
+    @SerialName("forced_until") val forcedUntil: String? = null,
+    @SerialName("has_crown_until") val hasCrownUntil: String? = null,
+    @SerialName("share_mode") val shareMode: String? = null,
+    @SerialName("check_streak") val checkStreak: Int? = null,
+    @SerialName("last_checkin") val lastCheckin: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("spent_amount") val spentAmount: Long? = null,
+    @SerialName("income_amount") val incomeAmount: Long? = null,
+) {
+    fun toProfile(): Profile =
+        Profile(
+            id = userId,
+            username = username.orEmpty(),
+            displayName = displayName.orEmpty(),
+            avatarSeed = avatarSeed ?: "default",
+            avatarColor = avatarColor ?: "mint",
+            avatarFace = avatarFace,
+            email = email,
+            coins = coins ?: 0,
+            phone = phone,
+            currentHat = currentHat,
+            currentOutfit = currentOutfit,
+            forcedOutfit = forcedOutfit,
+            forcedUntil = forcedUntil,
+            hasCrownUntil = hasCrownUntil,
+            shareMode = shareMode ?: "percent",
+            checkStreak = checkStreak ?: 0,
+            lastCheckin = lastCheckin,
+            createdAt = createdAt,
+        )
+}
+
+private data class MemberSpend(
+    val profile: Profile,
+    val spent: Int,
+    val income: Int,
 )
 
 @Singleton
 class RankingRepository @Inject constructor(
     private val supabase: SupabaseManager,
+    private val groupRepo: GroupRepository,
 ) {
     private val client get() = supabase.client
 
     suspend fun getTodayRanking(groupId: String): List<RankedMember> {
-        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
-        return getGroupMembersTodaySpend(groupId, today)
+        return getLiveRanking(groupId, rankingDate())
     }
 
-    private suspend fun getGroupMembersTodaySpend(groupId: String, date: String): List<RankedMember> {
-        return runCatching {
-            // 정산된 데이터가 있으면 사용, 없으면 실시간 transactions 합산
-            val rankings = client.from("daily_rankings")
-                .select(Columns.raw("*, profile:profiles(*)")) {
-                    filter {
-                        eq("group_id", groupId)
-                        eq("for_date", date)
-                    }
-                    order("rank", Order.ASCENDING)
-                }
-                .decodeList<DailyRanking>()
-
-            if (rankings.isNotEmpty()) {
-                // RPC로 수입도 한 번에 조회 (RLS 우회)
-                val spendingMap = runCatching {
-                    client.postgrest
-                        .rpc("get_group_daily_spending", buildJsonObject {
-                            put("p_group_id", groupId)
-                            put("p_date",     date)
-                        })
-                        .decodeList<MemberSpending>()
-                        .associateBy { it.userId }
-                }.getOrElse { emptyMap() }
-
-                rankings.mapNotNull { r ->
-                    val profile = r.profile ?: return@mapNotNull null
-                    val income  = spendingMap[r.userId]?.incomeAmount?.toInt() ?: 0
-                    val sv = buildShareValue(r.spentAmount, income)
-                    RankedMember(profile, r.spentAmount, income, r.rank, r.isWinner, r.isLoser, sv)
-                }
-            } else {
-                getLiveGroupSpend(groupId, date)
-            }
-        }.getOrElse { emptyList() }
+    suspend fun getTodayRankingMemberCount(groupId: String): Int {
+        return getRankingRows(groupId, rankingDate()).size
+            .coerceAtLeast(groupRepo.getGroupMemberCount(groupId))
+            .coerceAtLeast(getBasicRoomMembers(groupId).size)
     }
 
-    /**
-     * 자정 정산 전 실시간 랭킹.
-     * - Map<String,Any?> 대신 @Serializable GroupMember 사용 (supabase-kt 3.x 호환)
-     * - 수입 대비 지출 % 기준 오름차순 (낮을수록 1위)
-     * - 한 명이라도 입력하면 순위 표시, 미입력자는 맨 아래 "미입력" 표기
-     */
-    private suspend fun getLiveGroupSpend(groupId: String, date: String): List<RankedMember> {
-        val members = runCatching {
-            client.from("group_members")
-                .select(Columns.raw("*, profile:profiles(*)")) { filter { eq("group_id", groupId) } }
-                .decodeList<GroupMember>()
-        }.getOrElse { emptyList() }
+    private suspend fun getLiveRanking(groupId: String, date: String): List<RankedMember> {
+        val members = mergeRoomMembers(
+            rankedRows = getRankingRows(groupId, date),
+            roomMembers = groupRepo.getGroupMembers(groupId) + getBasicRoomMembers(groupId),
+        )
 
-        // RPC로 모든 멤버 지출/수입 한 번에 조회 (security definer → RLS 우회)
-        val spendingMap = runCatching {
-            client.postgrest
-                .rpc("get_group_daily_spending", buildJsonObject {
-                    put("p_group_id", groupId)
-                    put("p_date",     date)
-                })
-                .decodeList<MemberSpending>()
-                .associateBy { it.userId }
-        }.getOrElse { emptyMap() }
-
-        data class MemberSpend(val profile: Profile, val spent: Int, val income: Int)
-
-        val spendList = members.mapNotNull { member ->
-            val profile  = member.profile ?: return@mapNotNull null
-            val spending = spendingMap[profile.id]
-            MemberSpend(profile, spending?.spentAmount?.toInt() ?: 0, spending?.incomeAmount?.toInt() ?: 0)
-        }
-
-        // 수입·지출 모두 입력한 멤버만 순위에 포함, 나머지는 미입력으로 표시
-        val active   = spendList.filter { it.spent > 0 && it.income > 0 }
-        val inactive = spendList.filter { it.spent == 0 || it.income == 0 }
-
-        // 수입 대비 지출 % 오름차순 (수입 없으면 절대 지출액 기준)
+        val active = members.filter { it.income > 0 }
+        val inactive = members.filter { it.income <= 0 }
         val sortedActive = active.sortedWith(
             compareBy(
-                { ms: MemberSpend ->
-                    if (ms.income > 0) ms.spent.toDouble() / ms.income.toDouble()
-                    else Double.MAX_VALUE          // 수입 0 · 지출 있음 → 꼴등 후보
-                },
-                { ms: MemberSpend -> ms.spent },   // 동점 시 절대 금액 낮은 쪽이 앞
+                { spendingRatio(it) },
+                { it.spent },
+                { it.profile.displayName.ifBlank { it.profile.username } },
             )
         )
 
-        val rankedActive = sortedActive.mapIndexed { idx, ms ->
+        val rankedActive = sortedActive.mapIndexed { index, member ->
             RankedMember(
-                profile      = ms.profile,
-                spentAmount  = ms.spent,
-                incomeAmount = ms.income,
-                rank         = idx + 1,
-                isWinner     = idx == 0,
-                isLoser      = sortedActive.size > 1 && idx == sortedActive.lastIndex,
-                shareValue   = buildShareValue(ms.spent, ms.income),
+                profile = member.profile,
+                spentAmount = member.spent,
+                incomeAmount = member.income,
+                rank = index + 1,
+                isWinner = index == 0,
+                isLoser = sortedActive.size > 1 && index == sortedActive.lastIndex,
+                shareValue = buildShareValue(member.spent, member.income),
                 isNotEntered = false,
             )
         }
 
-        // 미입력자: 순위 없음, 맨 아래 배치
-        val rankedInactive = inactive.map { ms ->
+        val inactiveRank = rankedActive.size + 1
+        val rankedInactive = inactive.map { member ->
             RankedMember(
-                profile      = ms.profile,
-                spentAmount  = 0,
-                incomeAmount = 0,
-                rank         = sortedActive.size + 1,
-                isWinner     = false,
-                isLoser      = false,
-                shareValue   = "미입력",
+                profile = member.profile,
+                spentAmount = member.spent,
+                incomeAmount = member.income,
+                rank = inactiveRank,
+                isWinner = false,
+                isLoser = false,
+                shareValue = "순위권 밖",
                 isNotEntered = true,
             )
         }
@@ -158,13 +141,74 @@ class RankingRepository @Inject constructor(
         return rankedActive + rankedInactive
     }
 
-    /** 랭킹 행 요약 텍스트 (수입 대비 지출 %) */
+    private suspend fun getRankingRows(groupId: String, date: String): List<RankingMemberRow> =
+        runCatching {
+            client.postgrest
+                .rpc("get_group_ranking_members", buildJsonObject {
+                    put("p_group_id", groupId)
+                    put("p_date", date)
+                })
+                .decodeList<RankingMemberRow>()
+        }.getOrElse { emptyList() }
+
+    private fun mergeRoomMembers(
+        rankedRows: List<RankingMemberRow>,
+        roomMembers: List<GroupMember>,
+    ): List<MemberSpend> {
+        val byUserId = linkedMapOf<String, MemberSpend>()
+
+        rankedRows.forEach { row ->
+            byUserId[row.userId] = MemberSpend(
+                profile = row.toProfile(),
+                spent = row.spentAmount?.toInt() ?: 0,
+                income = row.incomeAmount?.toInt() ?: 0,
+            )
+        }
+
+        roomMembers.forEach { member ->
+            if (member.userId.isNotBlank() && byUserId[member.userId] == null) {
+                byUserId[member.userId] = MemberSpend(
+                    profile = member.profile ?: fallbackProfile(member.userId),
+                    spent = 0,
+                    income = 0,
+                )
+            }
+        }
+
+        return byUserId.values.toList()
+    }
+
+    private fun fallbackProfile(userId: String): Profile =
+        Profile(
+            id = userId,
+            username = "friend",
+            displayName = "친구",
+        )
+
+    private suspend fun getBasicRoomMembers(groupId: String): List<GroupMember> =
+        runCatching {
+            client.from("group_members")
+                .select {
+                    filter { eq("group_id", groupId) }
+                }
+                .decodeList<GroupMember>()
+        }.getOrElse { emptyList() }
+
+    private fun rankingDate(): String {
+        val now = LocalDateTime.now(KOREA_ZONE)
+        val date = if (now.hour < 4) now.toLocalDate().minusDays(1) else now.toLocalDate()
+        return date.format(DateTimeFormatter.ISO_LOCAL_DATE)
+    }
+
+    private fun spendingRatio(member: MemberSpend): Double =
+        member.spent.toDouble() / member.income.toDouble()
+
     private fun buildShareValue(spent: Int, income: Int): String =
         if (income > 0) {
-            val pct = (spent.toDouble() / income * 100).toInt()
-            "지출 ${pct}%  ·  %,d원".format(spent)
+            val percent = (spent.toDouble() / income * 100).toInt()
+            "지출 ${percent}% · %,d원".format(spent)
         } else {
-            "지출 %,d원".format(spent)
+            "수익 미입력 · 지출 %,d원".format(spent)
         }
 
     fun rankingChanges(groupId: String): Flow<Unit> = flow {
@@ -187,6 +231,16 @@ class RankingRepository @Inject constructor(
         changeFlow.collect { emit(Unit) }
     }
 
+    fun groupMemberChanges(groupId: String): Flow<Unit> = flow {
+        val channel = client.channel("members-ranking-$groupId")
+        val changeFlow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
+            table = "group_members"
+            filter(FilterOperation("group_id", FilterOperator.EQ, groupId))
+        }
+        channel.subscribe()
+        changeFlow.collect { emit(Unit) }
+    }
+
     fun anyRankingChange(groupId: String): Flow<Unit> =
-        merge(rankingChanges(groupId), transactionChanges(groupId))
+        merge(rankingChanges(groupId), transactionChanges(groupId), groupMemberChanges(groupId))
 }

@@ -31,6 +31,7 @@ import com.mintly.app.ui.theme.거지방Colors
 import com.mintly.app.ui.theme.Shape14
 import com.mintly.app.ui.theme.ShapePill
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,28 +53,34 @@ class ChatViewModel @Inject constructor(
     val myUserId: StateFlow<String?> = _myUserId.asStateFlow()
 
     private var currentRoomId: String? = null
-    private var initialized = false
+    private var currentGroupId: String? = null
+    private var realtimeJob: Job? = null
+    private var pollingJob: Job? = null
 
     fun init(groupId: String, groupName: String) {
-        if (initialized) return
-        initialized = true
+        if (currentGroupId == groupId && currentRoomId != null) return
+        currentGroupId = groupId
+        currentRoomId = null
+        realtimeJob?.cancel()
+        pollingJob?.cancel()
+        _messages.value = emptyList()
         viewModelScope.launch {
             _myUserId.value = authRepo.currentUserId()
             val room = runCatching { chatRepo.getOrCreateChatRoom(groupId, groupName) }.getOrNull() ?: return@launch
             currentRoomId = room.id
             _messages.value = chatRepo.getMessages(room.id)
-            launch {
+            realtimeJob = launch {
                 chatRepo.messageFlow(room.id).collect {
                     val updated = chatRepo.getMessages(room.id)
-                    if (updated.isNotEmpty()) _messages.value = updated
+                    _messages.value = updated
                 }
             }
             // 폴링 폴백: Realtime이 안 될 때도 5초마다 새 메시지 수신
-            launch {
+            pollingJob = launch {
                 while (true) {
                     kotlinx.coroutines.delay(5_000)
                     val refreshed = chatRepo.getMessages(room.id)
-                    if (refreshed.isNotEmpty() && refreshed != _messages.value) {
+                    if (refreshed != _messages.value) {
                         _messages.value = refreshed
                     }
                 }
@@ -85,11 +92,17 @@ class ChatViewModel @Inject constructor(
         val roomId = currentRoomId ?: return
         if (content.isBlank()) return
         viewModelScope.launch {
-            chatRepo.sendMessage(roomId, content.trim())
+            chatRepo.sendMessage(roomId, content.trim()).onSuccess {
+                _messages.value = chatRepo.getMessages(roomId)
+            }
             // getMessages 실패 시 기존 목록 유지
-            val updated = chatRepo.getMessages(roomId)
-            if (updated.isNotEmpty()) _messages.value = updated
         }
+    }
+
+    override fun onCleared() {
+        realtimeJob?.cancel()
+        pollingJob?.cancel()
+        super.onCleared()
     }
 }
 

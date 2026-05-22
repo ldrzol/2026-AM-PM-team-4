@@ -24,15 +24,60 @@ class ProfileRepository @Inject constructor(
 
     suspend fun getMyProfile(): Profile? {
         val uid = client.auth.currentUserOrNull()?.id ?: return null
-        return runCatching {
+        val profile = runCatching {
             client.from("profiles")
                 .select { filter { eq("id", uid) } }
                 .decodeSingleOrNull<Profile>()
         }.getOrNull()
+        return profile?.let { normalizeMyProfile(uid, it) } ?: ensureMyProfile(uid)
+    }
+
+    private suspend fun ensureMyProfile(uid: String): Profile? {
+        val nickname = "user_${uid.take(6)}"
+        return runCatching {
+            client.from("profiles").insert(
+                mapOf(
+                    "id" to uid,
+                    "username" to nickname,
+                    "display_name" to nickname,
+                )
+            )
+            Profile(id = uid, username = nickname, displayName = nickname)
+        }.getOrElse {
+            runCatching {
+                client.from("profiles")
+                    .select { filter { eq("id", uid) } }
+                    .decodeSingleOrNull<Profile>()
+            }.getOrNull()
+        }
+    }
+
+    private suspend fun normalizeMyProfile(uid: String, profile: Profile): Profile {
+        val nickname = profile.displayName.takeIf { it.isNotBlank() }
+            ?: profile.username.takeIf { it.isNotBlank() }
+            ?: "user_${uid.take(6)}"
+
+        if (profile.displayName.isNotBlank() && profile.username.isNotBlank()) {
+            return profile
+        }
+
+        val updates = buildJsonObject {
+            if (profile.displayName.isBlank()) put("display_name", nickname)
+            if (profile.username.isBlank()) put("username", nickname)
+        }
+        runCatching {
+            client.from("profiles").update(updates) { filter { eq("id", uid) } }
+        }
+
+        return profile.copy(
+            username = profile.username.ifBlank { nickname },
+            displayName = profile.displayName.ifBlank { nickname },
+        )
     }
 
     suspend fun updateProfile(updates: Map<String, Any?>): Result<Unit> = runCatching {
         val uid = client.auth.currentUserOrNull()?.id ?: error("Not logged in")
+        ensureMyProfile(uid)
         val json = buildJsonObject {
             updates.forEach { (k, v) ->
                 when (v) {
@@ -66,8 +111,14 @@ class ProfileRepository @Inject constructor(
     suspend fun updateShareMode(mode: String): Result<Unit> =
         updateProfile(mapOf("share_mode" to mode))
 
-    suspend fun updateDisplayName(name: String): Result<Unit> =
-        updateProfile(mapOf("display_name" to name))
+    suspend fun updateDisplayName(name: String): Result<Unit> {
+        val nickname = name.trim()
+        return if (nickname.isBlank()) {
+            Result.failure(IllegalArgumentException("닉네임을 입력해주세요"))
+        } else {
+            updateProfile(mapOf("display_name" to nickname))
+        }
+    }
 
     suspend fun updateUsername(username: String): Result<Unit> =
         updateProfile(mapOf("username" to username))
